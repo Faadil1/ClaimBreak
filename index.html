@@ -128,7 +128,9 @@ function verifyReceipt(input) {
     const refutable=id==='B'?(fidelityUpper!==null&&fidelityUpper<0.9):
       id==='C'?certified:id==='D'?(custom.claimType==='SEPARABLE'?certified:
       custom.claimType==='FIDELITY_MIN'&&fidelityUpper!==null&&fidelityUpper<custom.threshold):false;
-    const expected=verdict==='CERTIFIED_ENTANGLEMENT'?certified:verdict==='REFUTE_SPECIFIC_CLAIM'?refutable:verdict==='NOT_ESTABLISHED'?!certified&&!refutable:null;
+    const unresolved=(id==='B'||(id==='D'&&custom.claimType==='FIDELITY_MIN'))
+      ? !refutable : !certified&&!refutable;
+    const expected=verdict==='CERTIFIED_ENTANGLEMENT'?certified:verdict==='REFUTE_SPECIFIC_CLAIM'?refutable:verdict==='NOT_ESTABLISHED'?unresolved:null;
     add('Verdict is a defined ClaimBreak decision',expected!==null);
     add('Decision support agrees with independently recalculated evidence',expected===record.decision.supported);
     if(Array.isArray(record.decisionHistory)) {
@@ -159,9 +161,11 @@ function verifyReceipt(input) {
     const challengeRefutable=id==='B'?(fidelityUpper!==null&&fidelityUpper<.90):
       id==='C'?certified:id==='D'?(custom.claimType==='SEPARABLE'?certified:
       custom.claimType==='FIDELITY_MIN'&&fidelityUpper!==null&&fidelityUpper<custom.threshold):false;
+    const unresolvedForecast=(id==='B'||(id==='D'&&custom.claimType==='FIDELITY_MIN'))
+      ? !challengeRefutable : !certified&&!challengeRefutable;
     const supported=ch.forecast==='CERTIFIED_ENTANGLEMENT'?certified:
       ch.forecast==='REFUTE_SPECIFIC_CLAIM'?challengeRefutable:
-      ch.forecast==='NOT_ESTABLISHED'?!certified&&!challengeRefutable:false;
+      ch.forecast==='NOT_ESTABLISHED'?unresolvedForecast:false;
     add('Challenge forecast independently graded against quantum counts',ch.forecastSupported===supported);
     const attempts=Array.isArray(record.decisionHistory)?record.decisionHistory:[];
     const accepted=attempts.find(x=>x.supported)??null;
@@ -170,7 +174,9 @@ function verifyReceipt(input) {
     add('Challenge outcome matches accepted verdict and recovery history',
       ch.status===expectedStatus && ch.attemptCount===attempts.length &&
       ch.acceptedVerdict===(accepted?.verdict??null) &&
-      ch.caseResolved===Boolean(accepted&&accepted.verdict!=='NOT_ESTABLISHED'));
+      ch.caseResolved===Boolean(accepted&&accepted.verdict!=='NOT_ESTABLISHED' &&
+        (!(id==='B'||(id==='D'&&custom.claimType==='FIDELITY_MIN')) ||
+          accepted.verdict==='REFUTE_SPECIFIC_CLAIM')));
     add('Game-resource statement is tied to the same actual quantum job',
       ch.resourceUse?.quantumJobs===1&&
       ch.resourceUse?.shotsPerSetting===cfg.shots&&
