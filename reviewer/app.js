@@ -15,6 +15,16 @@
     receipts.push({source,check}); selected=receipts.length-1;
     render();setMessage(`${source}: ${check.status} — ${check.checks.filter(x=>!x.pass && x.severity==='error').length} numerical/integrity error(s).`);
   }
+  function renderCampaign(){
+    const campaign=campaignProgress(receipts.map(x=>x.check));
+    $('campaign-count').textContent=`${campaign.complete} / ${campaign.total} complete`;
+    $('campaign-tiles').innerHTML=campaign.missions.map((m,i)=>`<article class="campaign-tile ${m.complete?'complete':''}">
+      <span class="campaign-index">${String(i+1).padStart(2,'0')} / ${m.complete?'CLEARED':'LOCKED'}</span>
+      <h3>${enc(m.title)}</h3><p>${enc(m.description)}</p>
+      ${m.complete?`<button class="button secondary" type="button" data-campaign-receipt="${m.receiptIndex}">Inspect verified receipt →</button>`:
+      '<span class="campaign-pending">Requires a consistent Stage 4.2 Qollab receipt</span>'}
+    </article>`).join('');
+  }
   function render(){
     const have=receipts.length>0;
     $('empty').classList.toggle('hidden',have);$('docket').classList.toggle('hidden',!have);
@@ -30,6 +40,7 @@
       body.append(tr);
     });
     renderDetail();
+    renderCampaign();
   }
   function renderDetail(){
     const target=$('detail');
@@ -54,6 +65,13 @@
     <p class="muted">The reviewer recomputes forecast support from raw bitstrings. No game points masquerade as a scientific confidence measure.</p></div>`:'';
     target.innerHTML=`<div class="section-heading"><div><span class="overline">03 / INDEPENDENT REASSESSMENT</span><h2 id="detail-title">${enc(source)}</h2></div><span class="pill ${status}">INTERNAL AUDIT / ${status}</span></div><div class="record-facts"><span>CASE ${enc(conf.caseId)}</span><span>${enc(conf.protocol)} witness</span><span>${enc(exec.backendName)}</span><span>${enc(exec.shots)} shots per setting</span><span>${enc(classify)}</span></div><div class="findings-grid">${crossExamination}<div class="panel"><div class="overline">RECOMPUTED / NOT COPIED</div><h2>Scientific finding</h2><div class="metrics"><div class="metric"><small>ZZ parity</small><b>${num(e?.zz)}</b></div><div class="metric"><small>XX parity</small><b>${num(e?.xx)}</b></div><div class="metric"><small>Witness S</small><b>${num(e?.S)}</b></div><div class="metric"><small>Lower bound</small><b>${num(e?.lower)}</b></div><div class="metric"><small>Fidelity upper</small><b>${num(e?.fidelityUpper)}</b></div><div class="metric"><small>Entanglement witness</small><b>${e?.certified?'YES':'NO'}</b></div></div><div class="redline"><strong>Interpretation:</strong> ${e?.certified?'Selected witness crosses the separable threshold under the declared assumptions.':'Selected evidence does not establish entanglement. This never proves separability.'} ${e?.fidelityUpper!==null&&e?.fidelityUpper<.90&&conf.caseId==='B'?'The computed fidelity upper bound refutes the case B ≥0.90 claim.':''}</div></div><div class="panel"><div class="overline">INTEGRITY / CROSS-CHECKS</div><h2>Audit trail</h2><ul class="checklist">${checksHtml}</ul></div><div class="panel"><div class="overline">DECISION / APPEAL</div><h2>Reasoned verdict</h2><p><span class="pill ${d?(d.supported?'PASS':'FAIL'):'WARN'}">${enc(d?.verdict||'NOT FILED')}</span></p><p class="muted">${enc(d?.explanation||'This receipt contains no user verdict.')}</p><table class="review-table"><thead><tr><th>Attempt</th><th>Verdict</th><th>Outcome</th></tr></thead><tbody>${historyRows}</tbody></table></div><div class="panel"><div class="overline">PROVENANCE / UNVERIFIED ORIGIN</div><h2>Execution trail</h2><p class="mono">JOB ${enc(exec.jobId||'NOT EXPOSED')}</p><div class="eventbox">${eventHtml}</div><p class="small-note">This is a user-controlled record. No cryptographic signing, provider attestation, or independent backend API verification is performed.</p></div></div>`;
   }
+  $('campaign-tiles').addEventListener('click',ev=>{
+    const button=ev.target.closest?.('button[data-campaign-receipt]');
+    if(!button)return;
+    const index=Number(button.dataset.campaignReceipt);
+    if(!Number.isInteger(index)||index<0||index>=receipts.length)return;
+    selected=index;render();$('detail').scrollIntoView({block:'start',behavior:'smooth'});
+  });
   $('file-input').addEventListener('change',async ev=>{for(const f of [...ev.target.files]){try{addRecord(f.name,await f.text());}catch(e){setMessage(`Cannot read ${f.name}: ${e.message}`);}}ev.target.value='';});
   const zone=$('drop-zone');
   zone.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();$('file-input').click();}});
@@ -65,7 +83,7 @@
   $('load-example').addEventListener('click',()=>{addRecord('SYNTHETIC_FIXTURE_NOT_LIVE',window.CB_SYNTHETIC_FIXTURE);});
   $('clear-all').addEventListener('click',()=>{receipts.length=0;selected=-1;render();setMessage('Session cleared. No data was persisted.');});
   $('export-review').addEventListener('click',()=>{
-    const summary={product:'ClaimBreak Evidence Reviewer',reviewerVersion:REVIEWER_VERSION,kind:'LOCAL_INTEGRITY_REVIEW_NOT_BACKEND_ATTESTATION',generatedUtc:new Date().toISOString(),records:receipts.map(item=>({source:item.source,claimedJobId:item.check.record?.execution?.jobId??null,declaredBackend:item.check.record?.execution?.backendName??null,internalStatus:item.check.status,computed:item.check.computed,checks:item.check.checks,decision:item.check.record?.decision??null}))};
+    const summary={product:'ClaimBreak Evidence Reviewer',reviewerVersion:REVIEWER_VERSION,kind:'LOCAL_INTEGRITY_REVIEW_NOT_BACKEND_ATTESTATION',generatedUtc:new Date().toISOString(),campaign:campaignProgress(receipts.map(x=>x.check)),records:receipts.map(item=>({source:item.source,claimedJobId:item.check.record?.execution?.jobId??null,declaredBackend:item.check.record?.execution?.backendName??null,internalStatus:item.check.status,computed:item.check.computed,checks:item.check.checks,decision:item.check.record?.decision??null}))};
     $('review-export').classList.remove('hidden');$('review-json').value=JSON.stringify(summary,null,2);$('review-export').scrollIntoView({block:'start',behavior:'smooth'});
   });
   $('close-review').addEventListener('click',()=>{$('review-export').classList.add('hidden');});
