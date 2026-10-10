@@ -72,7 +72,7 @@ function validateCustomBlueprint(raw) {
   if(!raw || typeof raw!=='object'||Array.isArray(raw)) throw new Error('Challenge must be a JSON object.');
   const text=String(raw.gates??'').trim().toUpperCase();
   if(text.length>110) throw new Error('Too many circuit gates.');
-  const tokens=text.split(/\\s+/).filter(Boolean);
+  const tokens=text.split(/ +/).filter(Boolean);
   if(tokens.length<1||tokens.length>12||tokens.some(g=>!SOURCE_GATES.has(g)))
     throw new Error('Only H0, H1, Z0, Z1, CX01 and CX10 are allowed (1–12 gates).');
   if(!CLAIM_TYPES.has(raw.claimType)) throw new Error('Invalid claim type.');
@@ -286,11 +286,32 @@ function setupView() {
   const c = CASES[state.selection.caseId];
   const protocol = PROTOCOLS[state.selection.protocol];
   const testIsTwo = state.selection.protocol !== 'z';
+  const openLab = state.selection.caseId==='D'?`<div class="callout"><div class="eyebrow">OPEN QUANTUM SOURCE LAB / EXPERIMENTAL</div>
+    <h2>Author a quantum experiment, not just a verdict</h2>
+    <p>Your H/Z/CX gate sequence compiles into the real backend circuit. Your authored claim can be tested, rejected or left unresolved.</p>
+    <label for="cb3-gates">Two-qubit source blueprint</label>
+    <input id="cb3-gates" data-field="gates" value="${escapeHTML(state.custom.gates)}" maxlength="110"
+      style="width:100%;padding:12px;font:14px ui-monospace,Consolas,monospace;background:#fff;color:#17271d">
+    <p class="fine">Permitted gates: H0 H1 Z0 Z1 CX01 CX10. Sequence max 12 gates; initial state |00⟩.</p>
+    <label for="cb3-claim">Supplier claim</label><select id="cb3-claim" data-field="claimType">
+      ${[['ENTANGLED','Source is entangled'],['SEPARABLE','Source is separable'],
+        ['FIDELITY_MIN','Fidelity to Bell Phi+ is at least the selected percentage']].map(([v,label])=>
+        `<option value="${v}" ${state.custom.claimType===v?'selected':''}>${label}</option>`).join('')}</select>
+    <label for="cb3-threshold">Claimed minimum fidelity</label><select id="cb3-threshold" data-field="threshold"
+      ${state.custom.claimType!=='FIDELITY_MIN'?'disabled':''}>
+      ${[0.60,0.70,0.80,0.90,0.95].map(n=>`<option value="${n}" ${state.custom.threshold===n?'selected':''}>${Math.round(100*n)}%</option>`).join('')}</select>
+    <div class="actions"><button type="button" class="outline" data-action="share-blueprint">Export challenge blueprint</button>
+       <button type="button" class="outline" data-action="import-blueprint">Import pasted blueprint</button></div>
+    <textarea id="cb3-blueprint" aria-label="Exchange quantum challenge blueprint JSON"
+      placeholder="Export and share, or paste an authored source here"></textarea>
+    <p class="fine">Portable JSON is not signed or secret. Sources are transparent to those who inspect the challenge code; no verified opponent secrecy is claimed.</p>
+  </div>`:'';
   layout(`<div class="card"><div class="eyebrow">Stage 01 / experiment design</div><h2>Your protocol is the strategy</h2><p class="muted">Your choices determine the quantum circuit BEFORE it is sent to the selected backend. No other case is measured in this run.</p>
     <label for="cb3-case">Evidence case</label><select id="cb3-case" data-field="caseId">${Object.entries(CASES).map(([id,x])=>`<option value="${id}" ${id===state.selection.caseId?'selected':''}>${x.docket} — ${x.label}</option>`).join('')}</select>
     <label for="cb3-protocol">Predeclared measurement protocol</label><select id="cb3-protocol" data-field="protocol">${Object.entries(PROTOCOLS).map(([id,x])=>`<option value="${id}" ${id===state.selection.protocol?'selected':''}>${escapeHTML(x.label)}</option>`).join('')}</select>
     <label for="cb3-shots">Shots per setting</label><select id="cb3-shots" data-field="shots">${[64,128,256,512].map(n=>`<option value="${n}" ${n===state.selection.shots?'selected':''}>${n} ${n===128?'— recommended':''}</option>`).join('')}</select>
     <div class="callout"><strong>One actual quantum job.</strong> ${escapeHTML(protocol.summary)} ${testIsTwo?'The circuit contains two independent source preparations, one per basis.':'Only one preparation is executed.'} This is a real shot budget, not an inspection credit. With two settings you collect ${state.selection.shots} samples PER setting in one quantum job.</div>
+    ${openLab}
     <div class="mission"><div class="eyebrow">Quantum cross-examination · your stake</div><h2>Commit your prediction before the quantum job</h2>
       <p>What will this protocol actually justify? You cannot edit this forecast after measurement. If the evidence contradicts you, the court will show it.</p>
       <label for="cb3-forecast">Your pre-run forecast</label>
@@ -303,7 +324,7 @@ function setupView() {
     </div>
     <div class="actions"><button type="button" data-action="start" ${!state.challenge.forecast?'disabled':''}>Lock forecast &amp; collect real quantum evidence →</button></div>
     <p class="fine">The Qollab console may say “Running...” while waiting for this click. Select Qiskit Built-in Simulator (24q) in Qollab first. Do not use paid IonQ hardware for this test.</p></div>`,
-    `<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / sealed source</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(c.claim)}</p><p>${escapeHTML(c.briefing)}</p><div class="callout"><strong>Unknown until decision.</strong> The underlying preparation is concealed before the experiment.</div></div><div class="card"><div class="eyebrow">Protocol integrity</div><p>99% one-sided confidence bound for ONE predeclared witness or fidelity test. Repeated searching across new runs is not covered by this error guarantee.</p><p class="fine">Trusted measurement assumptions apply. No claim of device-independent verification or proven vendor fraud.</p></div>`);
+    `<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / sealed source</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(activeClaim())}</p><p>${escapeHTML(c.briefing)}</p><div class="callout"><strong>Unknown until decision.</strong> The underlying preparation is concealed before the experiment.</div></div><div class="card"><div class="eyebrow">Protocol integrity</div><p>99% one-sided confidence bound for ONE predeclared witness or fidelity test. Repeated searching across new runs is not covered by this error guarantee.</p><p class="fine">Trusted measurement assumptions apply. No claim of device-independent verification or proven vendor fraud.</p></div>`);
 }
 function runningView() {
   const c=CASES[state.selection.caseId];
@@ -343,7 +364,7 @@ function evidenceView() {
       ${challenge.caseResolved?'The precise claim can be resolved from this measured evidence.':'The scientifically defensible outcome is abstention.'}
       ${state.decisionHistory.length>1?'Your incorrect decision attempts remain permanently in this session receipt.':''}</p>`:''}
   </div>`;
-  layout(`<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / evidence acquired</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(c.claim)}</p><p class="fine">Actual measurements from this execution only. No other source has been measured in this Run.</p>${missionBlock}<div class="signal-rail">${parityRail('Z-BASIS / ZZ',e.zz)}${parityRail('X-BASIS / XX',e.xx)}</div><div class="metrics"><div class="metric"><small>ZZ observed</small><strong>${fmt(e.zz)}</strong></div><div class="metric"><small>XX observed</small><strong>${e.xx===null?'NOT MEASURED':fmt(e.xx)}</strong></div><div class="metric"><small>Selected witness S</small><strong>${fmt(e.S)}</strong></div><div class="metric"><small>One-sided margin (α = 0.01)</small><strong>${fmt(e.margin)}</strong></div></div><div class="callout">${scienceLine}</div>
+  layout(`<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / evidence acquired</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(activeClaim())}</p><p class="fine">Actual measurements from this execution only. No other source has been measured in this Run.</p>${missionBlock}<div class="signal-rail">${parityRail('Z-BASIS / ZZ',e.zz)}${parityRail('X-BASIS / XX',e.xx)}</div><div class="metrics"><div class="metric"><small>ZZ observed</small><strong>${fmt(e.zz)}</strong></div><div class="metric"><small>XX observed</small><strong>${e.xx===null?'NOT MEASURED':fmt(e.xx)}</strong></div><div class="metric"><small>Selected witness S</small><strong>${fmt(e.S)}</strong></div><div class="metric"><small>One-sided margin (α = 0.01)</small><strong>${fmt(e.margin)}</strong></div></div><div class="callout">${scienceLine}</div>
   ${state.selection.caseId==='B' && e.fidelityUpper!==null?`<div class="callout"><strong>Claim-specific test:</strong> conservative 99% upper bound for fidelity F(Φ+) is <b>${fmt(e.fidelityUpper)}</b>. ${claimRefuted?'This is below the vendor threshold 0.90.':'This does not yet refute the vendor threshold 0.90.'}</div>`:''}
   ${theory ? `<details class="card"><summary>Post-verdict reliability lens — mathematical reference (not a new quantum run)</summary><p class="fine">For the ideal separable-mixture model at the witness boundary, an uncalibrated rule S &gt; 1 miscertifies with probability ${pct(theory.naive)}. The fixed, predeclared ${fmt(100*(1-ALPHA))}% one-sided calibrated rule has exact false-certification probability ${pct(theory.calibrated)} at the same sample size. These are exact binomial reference calculations for this ideal model, not measured device error rates, and they do not establish performance under correlated noise.</p></details>` : ''}
   <div class="hint" role="status"><strong>Receipt checks:</strong> ${state.auditChecks.status === 'PASS' ? 'All internal checks passed' : 'Internal inconsistency detected — do not certify'} (${state.auditChecks.checks.filter(x=>x.pass).length}/${state.auditChecks.checks.length}). These checks do not validate QPU calibration.</div>
