@@ -8,7 +8,8 @@ const EPS = 1e-9;
 const PAIRS = {
   A: { z:[0,1], x:[2,3], single:2, dual:4 },
   B: { z:[1,2], x:[4,5], single:3, dual:6 },
-  C: { z:[0,1], x:[2,3], single:2, dual:4 }
+  C: { z:[0,1], x:[2,3], single:2, dual:4 },
+  D: { z:[0,1], x:[2,3], single:2, dual:4 }
 };
 const roundMatch = (a,b) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a-b) <= EPS;
 
@@ -28,6 +29,17 @@ export function verifyReceipt(input) {
   const protocol=record.protocol??{};
   const id=cfg.caseId;
   const kind=cfg.protocol;
+  const custom=record.customBlueprint;
+  let customValid=false;
+  if(id==='D'){
+    const tokens=typeof custom?.gates==='string'?custom.gates.trim().split(/ +/):[];
+    customValid=record.version==='stage4.3' && tokens.length>=1 && tokens.length<=12 &&
+      tokens.every(x=>['H0','H1','Z0','Z1','CX01','CX10'].includes(x)) &&
+      ['ENTANGLED','SEPARABLE','FIDELITY_MIN'].includes(custom?.claimType) &&
+      typeof custom?.threshold==='number' && custom.threshold>=.60 && custom.threshold<=.95;
+    add('Custom source blueprint uses known circuit instructions and claim',customValid);
+    if(!customValid)return {status:'FAIL',checks,computed:null,record};
+  }
   const pair=PAIRS[id];
   const dual=kind==='plus'||kind==='minus';
   add('Known case and predeclared protocol', !!pair && (dual||kind==='z'));
@@ -73,10 +85,22 @@ export function verifyReceipt(input) {
   add('No extra completed quantum job recorded',eventTypes.filter(x=>x==='LIVE_QUANTUM_RUN_COMPLETED').length===1);
   const pre=record.events?.find(x=>x.type==='EXPERIMENT_PREDECLARED')?.utc;
   const complete=record.events?.find(x=>x.type==='LIVE_QUANTUM_RUN_COMPLETED')?.utc;
+  if(id==='D') {
+    const sourceLocks=(record.events??[]).filter(x=>x.type==='CUSTOM_CHALLENGE_BLUEPRINT_LOCKED');
+    const sourceLock=sourceLocks[0];
+    const startTime=Date.parse(sourceLock?.utc??'');
+    const finishTime=Date.parse(complete??'');
+    add('Custom source was locked before the quantum result',sourceLocks.length===1 &&
+      Number.isFinite(startTime)&&Number.isFinite(finishTime)&&startTime<=finishTime&&
+      eventTypes.indexOf('CUSTOM_CHALLENGE_BLUEPRINT_LOCKED')<eventTypes.indexOf('LIVE_QUANTUM_RUN_COMPLETED') &&
+      JSON.stringify(sourceLock?.detail)===JSON.stringify(custom));
+  }
   if(pre&&complete) add('Protocol declared before returned results',!Number.isNaN(Date.parse(pre))&&!Number.isNaN(Date.parse(complete))&&Date.parse(pre)<=Date.parse(complete));
   if(record.decision){
     const verdict=record.decision.verdict;
-    const refutable=id==='B'?(fidelityUpper!==null&&fidelityUpper<0.9):id==='C'?certified:false;
+    const refutable=id==='B'?(fidelityUpper!==null&&fidelityUpper<0.9):
+      id==='C'?certified:id==='D'?(custom.claimType==='SEPARABLE'?certified:
+      custom.claimType==='FIDELITY_MIN'&&fidelityUpper!==null&&fidelityUpper<custom.threshold):false;
     const expected=verdict==='CERTIFIED_ENTANGLEMENT'?certified:verdict==='REFUTE_SPECIFIC_CLAIM'?refutable:verdict==='NOT_ESTABLISHED'?!certified&&!refutable:null;
     add('Verdict is a defined ClaimBreak decision',expected!==null);
     add('Decision support agrees with independently recalculated evidence',expected===record.decision.supported);
@@ -91,7 +115,7 @@ export function verifyReceipt(input) {
   } else warn('No committed or rejected decision in this receipt');
   // Stage 4.2: re-evaluate the player's precommitted strategy from raw counts,
   // rather than trusting the copied on-screen challenge assessment.
-  if(record.version==='stage4.2'){
+  if(record.version==='stage4.2'||record.version==='stage4.3'){
     const ch=record.challenge??{};
     const lockEvents=(record.events??[]).filter(x=>x.type==='CHALLENGE_FORECAST_LOCKED');
     const lock=lockEvents[0];
@@ -105,7 +129,9 @@ export function verifyReceipt(input) {
       eventTypes.indexOf('CHALLENGE_FORECAST_LOCKED')<eventTypes.indexOf('LIVE_QUANTUM_RUN_COMPLETED'));
     add('Precommit matches actual shot/basis configuration',
       lock?.detail?.shots===cfg.shots && lock?.detail?.protocol===cfg.protocol);
-    const challengeRefutable=id==='B'?(fidelityUpper!==null&&fidelityUpper<.90):id==='C'?certified:false;
+    const challengeRefutable=id==='B'?(fidelityUpper!==null&&fidelityUpper<.90):
+      id==='C'?certified:id==='D'?(custom.claimType==='SEPARABLE'?certified:
+      custom.claimType==='FIDELITY_MIN'&&fidelityUpper!==null&&fidelityUpper<custom.threshold):false;
     const supported=ch.forecast==='CERTIFIED_ENTANGLEMENT'?certified:
       ch.forecast==='REFUTE_SPECIFIC_CLAIM'?challengeRefutable:
       ch.forecast==='NOT_ESTABLISHED'?!certified&&!challengeRefutable:false;
