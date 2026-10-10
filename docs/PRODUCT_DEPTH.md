@@ -25,3 +25,12 @@ The core needs a real backend response: the UI cannot choose a supported verdict
 No multi-session state server; Qollab sessions reset on full Run. No external claim submission; A/B/C are educational controlled sources. No verified hardware attestation, identity service, audit-signature chain, independent user adoption, or comprehensive repeated-run reliability. Additional real value should be tested against time and submission risk, not indiscriminately added.
 
 Receipts are outputs of product use; replay and synthetic fixtures are secondary inspection aids.
+
+
+## Stage 4.2 candidate — strategic player loop (UNVERIFIED LIVE UNTIL TESTED)
+
+A player now predicts the scientifically admissible verdict **before** dispatching the quantum circuit, then commits a fixed measurement protocol and a real simulator shot budget. Their locked forecast becomes a challenge contract that cannot be edited post-observation. After the Qiskit result, the very same calibrated admissibility rules determine whether the player's forecast held; the player can file a supported verdict, or see an unsupported one rejected and revise using the same quantum evidence. The reviewer independently re-evaluates the forecast, its chronology and resource statement from the exported counts.
+
+This strengthens the learning/recovery loop but does not introduce multi-round server persistence, arbitrary new sources, paid hardware, real deployment attestation or external-user usage. Real cross-examination runtime, tool/browser usability and signed-out visitor access remain **UNKNOWN** until the actual Stage 4.2 code is copied and exercised on Qollab.
+
+The original three sources, one-backend-job-per-Run rule, exact scientific bounds and independent verifier remain the shared product core; stage 4.1 receipts remain historical evidence.

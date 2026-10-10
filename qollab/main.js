@@ -1,4 +1,4 @@
-// CLAIMBREAK STAGE 4.1 — Stage 4 + recoverable verdicts with an append-only decision history.
+// CLAIMBREAK STAGE 4.2 — Cross-Examination: commit a forecast, spend quantum shots, and face the result.
 // Hardening pass: honest provenance, decision outcome events, analytical reliability audit, export and recovery.
 // Intended for Qollab's JS/Qiskit project shape. Keep starter index.html (#container).
 // The Qollab runtime injects `backend`. Never hardcode a QPU or credentials.
@@ -9,7 +9,7 @@
 import { QuantumCircuit } from 'qiskit';
 
 const ALPHA = 0.01; // predeclared ONE selected one-sided test per execution
-const VERSION = 'stage4.1';
+const VERSION = 'stage4.2';
 const CASES = {
   A: {
     label: 'Source A', docket: 'FILE / 001', claim: 'The submitted source is entangled.',
@@ -38,7 +38,8 @@ if (!root) throw new Error('ClaimBreak requires the Qollab starter index.html el
 
 const state = {
   phase: 'setup', selection: { caseId:'A', protocol:'plus', shots:128 },
-  execution:null, evidence:null, decision:null, decisionHistory:[], events:[], error:null, selectedHypothesis:null, auditChecks:null
+  execution:null, evidence:null, decision:null, decisionHistory:[], events:[], error:null, selectedHypothesis:null, auditChecks:null,
+  challenge:{forecast:null, locked:false}
 };
 let startResolve = null;
 const isoNow = () => new Date().toISOString();
@@ -158,23 +159,40 @@ function theoreticalFalseCertificationRate(shots,threshold) {
   return Math.min(1,Math.max(0,probability));
 }
 
-function allowedDecision(verdict) {
-  const e = state.evidence;
-  if(state.auditChecks?.status !== 'PASS') return false;
-  const caseId = state.selection.caseId;
-  if (verdict === 'CERTIFIED_ENTANGLEMENT') return e.certified;
+// PURE CHALLENGE RULES — independently unit tested offline.
+function supportsVerdict(verdict,e,caseId,auditPassed) {
+  if(!auditPassed || !e) return false;
+  if (verdict === 'CERTIFIED_ENTANGLEMENT') return e.certified === true;
   if (verdict === 'REFUTE_SPECIFIC_CLAIM') {
     if (caseId === 'B') return e.fidelityUpper !== null && e.fidelityUpper < 0.90;
-    if (caseId === 'C') return e.certified; // separability claim refuted by entanglement witness
-    return false; // No valid argument that source A is NOT entangled.
+    if (caseId === 'C') return e.certified === true;
+    return false;
   }
   if (verdict === 'NOT_ESTABLISHED') {
     const refutable = caseId === 'B' ? e.fidelityUpper !== null && e.fidelityUpper < 0.90
-      : caseId === 'C' ? e.certified : false;
+      : caseId === 'C' ? e.certified === true : false;
     return !e.certified && !refutable;
   }
   return false;
 }
+function challengeAssessment(forecast,e,caseId,auditPassed,history,shots,protocol) {
+  const valid=['CERTIFIED_ENTANGLEMENT','REFUTE_SPECIFIC_CLAIM','NOT_ESTABLISHED'].includes(forecast);
+  const precommitSupported=valid && supportsVerdict(forecast,e,caseId,auditPassed);
+  const accepted=history.find(d=>d.supported) || null;
+  return {
+    forecast, forecastSupported:precommitSupported, attemptCount:history.length,
+    acceptedVerdict:accepted?.verdict ?? null,
+    caseResolved:Boolean(accepted && accepted.verdict!=='NOT_ESTABLISHED'),
+    status: !accepted ? 'AWAITING_ADMISSIBLE_VERDICT' :
+      precommitSupported ? 'FORECAST_UPHELD' : 'FORECAST_OVERTURNED',
+    resourceUse:{quantumJobs:1,shotsPerSetting:shots,measuredSettings:protocol==='z'?1:2},
+    scoringBasis:'Forecast locked before measurement. Outcome depends on measured evidence. No extra quantum calls.'
+  };
+}
+function allowedDecision(verdict) {
+  return supportsVerdict(verdict,state.evidence,state.selection.caseId,state.auditChecks?.status==='PASS');
+}
+// END PURE CHALLENGE RULES
 
 const css = `
 #cb3{--bg:#f2efe8;--panel:#fffdf9;--ink:#212d28;--muted:#5d6c64;--line:#ccd1c7;--accent:#a63f2c;--forest:#22382e;--safe:#255944; color:var(--ink);background:var(--bg);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;min-height:540px}
@@ -190,10 +208,25 @@ const css = `
 #cb3 .fine{font-size:12px;color:var(--muted)}#cb3 .ledger{font-size:12px;word-wrap:break-word}#cb3 textarea{font:12px/1.4 ui-monospace,Consolas,monospace;background:white;color:#1f2b25;width:100%;min-height:230px;padding:12px;border:1px solid #8c978c;resize:vertical}
 #cb3 .decision{border-top:1px solid var(--line);padding-top:12px;margin-top:14px}#cb3 .status{font-weight:650}#cb3 summary{cursor:pointer;font-weight:600}
 #cb3 .good{color:#235a43}#cb3 .bad{color:#ad3b2b}#cb3 .hint{font-size:12px;padding:10px 12px;background:#f1efe9;border:1px solid var(--line)}
+#cb3 .mission{background:#1f382f;color:#f9f3e5;border:1px solid #4c6456;padding:20px;position:relative;overflow:hidden}
+#cb3 .mission:before{content:'01 / CROSS-EXAMINATION';position:absolute;right:-8px;top:-8px;font:700 12px ui-monospace,monospace;letter-spacing:.1em;color:#77978a;opacity:.32;transform:rotate(9deg)}
+#cb3 .mission h2{color:#fff4df}#cb3 .mission p{color:#dbe8df}#cb3 .mission label{color:#fff4df}
+#cb3 .mission .fine{color:#c6d4c9}#cb3 .mission select{background:#fffaf1}
+#cb3 .signal-rail{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+#cb3 .signal-cell{border:1px solid #cad2c8;background:#f5f5ef;padding:12px}
+#cb3 .signal-track{height:9px;background:#e2e4db;position:relative;margin:9px 0}
+#cb3 .signal-track>i{display:block;background:var(--accent);height:100%}
+#cb3 .challenge-outcome{border:2px solid var(--forest);padding:16px;margin:16px 0;background:#f2f5ec}
+#cb3 .challenge-outcome.lost{border-color:var(--accent);background:#fcf0e9}
+#cb3 .challenge-outcome .eyebrow{color:var(--accent)}
+#cb3 .scoreline{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#cb3 .scoreline span{font:600 11px ui-monospace,monospace;letter-spacing:.03em;border:1px solid #aab8aa;padding:6px 8px}
+#cb3 .mission-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+@media(max-width:420px){#cb3 .signal-rail{grid-template-columns:1fr}}
 @media(max-width:760px){#cb3 .grid{grid-template-columns:1fr}#cb3 .page{padding:14px}#cb3 .card{padding:16px}#cb3 .metrics{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){#cb3 *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 `;
-root.innerHTML = `<style>${css}</style><main id="cb3"><header class="header"><div class="eyebrow">CLAIMBREAK / QUANTUM EVIDENCE COURT / STAGE 4</div><h1>Don't trust the claim.<br>Design the test.</h1><p class="muted">A live Qiskit experiment. One circuit per Qollab Run. Decisions must not exceed the evidence.</p><span class="tag" id="cb3-tag">AWAITING EXPERIMENT</span></header><div class="page" id="cb3-content" aria-live="polite"></div></main>`;
+root.innerHTML = `<style>${css}</style><main id="cb3"><header class="header"><div class="eyebrow">CLAIMBREAK / QUANTUM CROSS-EXAMINATION / STAGE 4.2</div><h1>Put your scientific certainty<br>on trial.</h1><p class="muted">Commit your prediction. Choose what to measure. Let actual quantum evidence prove you wrong — or uphold your case.</p><span class="tag" id="cb3-tag">AWAITING EXPERIMENT</span></header><div class="page" id="cb3-content" aria-live="polite"></div></main>`;
 const content = root.querySelector('#cb3-content');
 const tag = root.querySelector('#cb3-tag');
 function layout(left, right='') { content.innerHTML = `<div class="grid"><section>${left}</section><aside>${right}</aside></div>`; }
@@ -201,12 +234,22 @@ function setupView() {
   const c = CASES[state.selection.caseId];
   const protocol = PROTOCOLS[state.selection.protocol];
   const testIsTwo = state.selection.protocol !== 'z';
-  layout(`<div class="card"><div class="eyebrow">Before acquisition / protocol lock</div><h2>Choose what the lab will actually measure</h2><p class="muted">Your choices determine the quantum circuit BEFORE it is sent to the selected backend. No other case is measured in this run.</p>
+  layout(`<div class="card"><div class="eyebrow">Stage 01 / experiment design</div><h2>Your protocol is the strategy</h2><p class="muted">Your choices determine the quantum circuit BEFORE it is sent to the selected backend. No other case is measured in this run.</p>
     <label for="cb3-case">Evidence case</label><select id="cb3-case" data-field="caseId">${Object.entries(CASES).map(([id,x])=>`<option value="${id}" ${id===state.selection.caseId?'selected':''}>${x.docket} — ${x.label}</option>`).join('')}</select>
     <label for="cb3-protocol">Predeclared measurement protocol</label><select id="cb3-protocol" data-field="protocol">${Object.entries(PROTOCOLS).map(([id,x])=>`<option value="${id}" ${id===state.selection.protocol?'selected':''}>${escapeHTML(x.label)}</option>`).join('')}</select>
     <label for="cb3-shots">Shots per setting</label><select id="cb3-shots" data-field="shots">${[64,128,256,512].map(n=>`<option value="${n}" ${n===state.selection.shots?'selected':''}>${n} ${n===128?'— recommended':''}</option>`).join('')}</select>
     <div class="callout"><strong>One actual quantum job.</strong> ${escapeHTML(protocol.summary)} ${testIsTwo?'The circuit contains two independent source preparations, one per basis.':'Only one preparation is executed.'} This is a real shot budget, not an inspection credit. With two settings you collect ${state.selection.shots} samples PER setting in one quantum job.</div>
-    <button type="button" data-action="start">Collect quantum evidence <span aria-hidden="true">→</span></button>
+    <div class="mission"><div class="eyebrow">Quantum cross-examination · your stake</div><h2>Commit your prediction before the quantum job</h2>
+      <p>What will this protocol actually justify? You cannot edit this forecast after measurement. If the evidence contradicts you, the court will show it.</p>
+      <label for="cb3-forecast">Your pre-run forecast</label>
+      <select id="cb3-forecast" data-field="forecast"><option value="">Choose the decision you expect the evidence to support</option>
+      ${[['CERTIFIED_ENTANGLEMENT','Certify entanglement'],['REFUTE_SPECIFIC_CLAIM','Refute the submitted claim'],['NOT_ESTABLISHED','Admit evidence is insufficient']]
+        .map(([v,l])=>`<option value="${v}" ${v===state.challenge.forecast?'selected':''}>${l}</option>`).join('')}</select>
+      <div class="mission-foot"><span class="tag">1 QUANTUM JOB</span><span class="tag">${state.selection.shots} SHOTS / BASIS</span>
+      <span class="tag">${testIsTwo?2:1} MEASUREMENT ${testIsTwo?'BASES':'BASIS'}</span></div>
+      <p class="fine">Shots are real backend resources, not game currency. An accurate forecast must survive actual bitstring counts and the calibrated bound.</p>
+    </div>
+    <div class="actions"><button type="button" data-action="start" ${!state.challenge.forecast?'disabled':''}>Lock forecast &amp; collect real quantum evidence →</button></div>
     <p class="fine">The Qollab console may say “Running...” while waiting for this click. Select Qiskit Built-in Simulator (24q) in Qollab first. Do not use paid IonQ hardware for this test.</p></div>`,
     `<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / sealed source</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(c.claim)}</p><p>${escapeHTML(c.briefing)}</p><div class="callout"><strong>Unknown until decision.</strong> The underlying preparation is concealed before the experiment.</div></div><div class="card"><div class="eyebrow">Protocol integrity</div><p>99% one-sided confidence bound for ONE predeclared witness or fidelity test. Repeated searching across new runs is not covered by this error guarantee.</p><p class="fine">Trusted measurement assumptions apply. No claim of device-independent verification or proven vendor fraud.</p></div>`);
 }
@@ -228,7 +271,27 @@ function evidenceView() {
     ['REFUTE_SPECIFIC_CLAIM','Refute submitted claim'],
     ['NOT_ESTABLISHED','Evidence insufficient']
   ];
-  layout(`<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / evidence acquired</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(c.claim)}</p><p class="fine">Actual measurements from this execution only. No other source has been measured in this Run.</p><div class="metrics"><div class="metric"><small>ZZ observed</small><strong>${fmt(e.zz)}</strong></div><div class="metric"><small>XX observed</small><strong>${e.xx===null?'NOT MEASURED':fmt(e.xx)}</strong></div><div class="metric"><small>Selected witness S</small><strong>${fmt(e.S)}</strong></div><div class="metric"><small>One-sided margin (α = 0.01)</small><strong>${fmt(e.margin)}</strong></div></div><div class="callout">${scienceLine}</div>
+  const challenge = challengeAssessment(state.challenge.forecast,e,state.selection.caseId,
+    state.auditChecks.status==='PASS',state.decisionHistory,state.selection.shots,state.selection.protocol);
+  const forecastLabels={CERTIFIED_ENTANGLEMENT:'Certify entanglement',
+    REFUTE_SPECIFIC_CLAIM:'Refute submitted claim',NOT_ESTABLISHED:'Evidence insufficient'};
+  const parityRail=(name,value)=>`<div class="signal-cell"><div class="eyebrow">${name} / MEASURED</div>
+    <strong>${fmt(value)}</strong><div class="signal-track"><i style="width:${Math.max(0,Math.min(100,100*Math.abs(value??0)))}%"></i></div>
+    <span class="fine">${value===null?'NOT MEASURED':'Absolute parity magnitude; direction is reported numerically.'}</span></div>`;
+  const missionBlock = `<div class="challenge-outcome ${challenge.forecastSupported?'':'lost'}">
+    <div class="eyebrow">Cross-examination / precommitted before quantum acquisition</div>
+    <h2>${challenge.forecastSupported?'Your prediction survived measurement':'The quantum evidence challenged your prediction'}</h2>
+    <p><strong>Your locked forecast:</strong> ${escapeHTML(forecastLabels[challenge.forecast]??'NONE')}.</p>
+    <p>${challenge.forecastSupported?'Your chosen conclusion is now admissible under the stated confidence assumptions.':
+      'Your announced conclusion is not supported by this actual run. Revise the verdict or abstain; the record keeps your original prediction.'}</p>
+    <div class="scoreline"><span>1 ACTUAL BACKEND JOB</span><span>${state.selection.shots} SHOTS / BASIS</span>
+      <span>${state.selection.protocol==='z'?1:2} BASIS SETTING(S)</span>
+      <span>${state.decisionHistory.length} VERDICT ATTEMPTS</span></div>
+    ${state.decision?.supported?`<p><strong>${challenge.status==='FORECAST_UPHELD'?'FORECAST UPHELD':'FORECAST OVERTURNED'}</strong> ·
+      ${challenge.caseResolved?'The precise claim can be resolved from this measured evidence.':'The scientifically defensible outcome is abstention.'}
+      ${state.decisionHistory.length>1?'Your incorrect decision attempts remain permanently in this session receipt.':''}</p>`:''}
+  </div>`;
+  layout(`<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / evidence acquired</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(c.claim)}</p><p class="fine">Actual measurements from this execution only. No other source has been measured in this Run.</p>${missionBlock}<div class="signal-rail">${parityRail('Z-BASIS / ZZ',e.zz)}${parityRail('X-BASIS / XX',e.xx)}</div><div class="metrics"><div class="metric"><small>ZZ observed</small><strong>${fmt(e.zz)}</strong></div><div class="metric"><small>XX observed</small><strong>${e.xx===null?'NOT MEASURED':fmt(e.xx)}</strong></div><div class="metric"><small>Selected witness S</small><strong>${fmt(e.S)}</strong></div><div class="metric"><small>One-sided margin (α = 0.01)</small><strong>${fmt(e.margin)}</strong></div></div><div class="callout">${scienceLine}</div>
   ${state.selection.caseId==='B' && e.fidelityUpper!==null?`<div class="callout"><strong>Claim-specific test:</strong> conservative 99% upper bound for fidelity F(Φ+) is <b>${fmt(e.fidelityUpper)}</b>. ${claimRefuted?'This is below the vendor threshold 0.90.':'This does not yet refute the vendor threshold 0.90.'}</div>`:''}
   ${theory ? `<details class="card"><summary>Post-verdict reliability lens — mathematical reference (not a new quantum run)</summary><p class="fine">For the ideal separable-mixture model at the witness boundary, an uncalibrated rule S &gt; 1 miscertifies with probability ${pct(theory.naive)}. The fixed, predeclared ${fmt(100*(1-ALPHA))}% one-sided calibrated rule has exact false-certification probability ${pct(theory.calibrated)} at the same sample size. These are exact binomial reference calculations for this ideal model, not measured device error rates, and they do not establish performance under correlated noise.</p></details>` : ''}
   <div class="hint" role="status"><strong>Receipt checks:</strong> ${state.auditChecks.status === 'PASS' ? 'All internal checks passed' : 'Internal inconsistency detected — do not certify'} (${state.auditChecks.checks.filter(x=>x.pass).length}/${state.auditChecks.checks.length}). These checks do not validate QPU calibration.</div>
@@ -271,11 +334,14 @@ function exportRecord() {
       naiveFalseCertificationProbability:theoreticalFalseCertificationRate(state.evidence.shotsReturned,0),
       calibratedFalseCertificationProbability:theoreticalFalseCertificationRate(state.evidence.shotsReturned,state.evidence.margin)
     } : null,
-    rawCounts:state.execution.rawCounts,decision:state.decision,decisionHistory:state.decisionHistory,events:state.events
+    rawCounts:state.execution.rawCounts,decision:state.decision,decisionHistory:state.decisionHistory,
+    challenge:challengeAssessment(state.challenge.forecast,state.evidence,state.selection.caseId,
+      state.auditChecks.status==='PASS',state.decisionHistory,state.selection.shots,state.selection.protocol),
+    events:state.events
   };
   let panel=root.querySelector('#cb3-json-panel');
   if(!panel){ panel=document.createElement('section'); panel.id='cb3-json-panel';panel.className='card';content.prepend(panel); }
-  panel.innerHTML=`<div class="eyebrow">Evidence / manual export</div><h2>Copy the exact JSON</h2><p class="fine">This browser may block Blob downloads. Select all JSON, press Ctrl+C, paste into Windows Notepad, then Save as <strong>claimbreak-stage4-1-evidence.json</strong> (All files / UTF-8).</p><div class="actions"><button type="button" data-action="select-json">Select all JSON</button><button type="button" class="outline" data-action="close-json">Close</button></div><textarea id="cb3-json-text" aria-label="Exported evidence JSON" readonly spellcheck="false"></textarea><p class="fine" id="cb3-copy-status">No further quantum job is needed.</p>`;
+  panel.innerHTML=`<div class="eyebrow">Evidence / manual export</div><h2>Copy the exact JSON</h2><p class="fine">This browser may block Blob downloads. Select all JSON, press Ctrl+C, paste into Windows Notepad, then Save as <strong>claimbreak-stage4-2-evidence.json</strong> (All files / UTF-8).</p><div class="actions"><button type="button" data-action="select-json">Select all JSON</button><button type="button" class="outline" data-action="close-json">Close</button></div><textarea id="cb3-json-text" aria-label="Exported evidence JSON" readonly spellcheck="false"></textarea><p class="fine" id="cb3-copy-status">No further quantum job is needed.</p>`;
   panel.querySelector('textarea').value=JSON.stringify(out,null,2);
   panel.scrollIntoView({block:'start',behavior:'auto'});
 }
@@ -286,12 +352,19 @@ root.addEventListener('change',ev=>{
   if(field==='caseId'&&CASES[ev.target.value])state.selection.caseId=ev.target.value;
   if(field==='protocol'&&PROTOCOLS[ev.target.value])state.selection.protocol=ev.target.value;
   if(field==='shots'&&[64,128,256,512].includes(Number(ev.target.value)))state.selection.shots=Number(ev.target.value);
+  if(field==='forecast'&&['CERTIFIED_ENTANGLEMENT','REFUTE_SPECIFIC_CLAIM','NOT_ESTABLISHED',''].includes(ev.target.value))
+    state.challenge.forecast=ev.target.value || null;
   if(field)render();
 });
 root.addEventListener('click',ev=>{
   const b=ev.target.closest?.('button[data-action]'); if(!b)return;
   const act=b.dataset.action;
-  if(act==='start'&&state.phase==='setup'&&startResolve){record('EXPERIMENT_PREDECLARED',{...state.selection});const go=startResolve;startResolve=null;go();}
+  if(act==='start'&&state.phase==='setup'&&startResolve&&state.challenge.forecast){
+    state.challenge.locked=true;
+    record('CHALLENGE_FORECAST_LOCKED',{forecast:state.challenge.forecast,shots:state.selection.shots,protocol:state.selection.protocol});
+    record('EXPERIMENT_PREDECLARED',{...state.selection});
+    const go=startResolve;startResolve=null;go();
+  }
   if(act==='decision'&&state.phase==='evidence'&&!state.decision?.supported){
     const verdict=b.dataset.value;
     if(!['CERTIFIED_ENTANGLEMENT','REFUTE_SPECIFIC_CLAIM','NOT_ESTABLISHED'].includes(verdict))return;

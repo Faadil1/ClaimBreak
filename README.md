@@ -16,6 +16,14 @@ A Qollab / IonQ Global Quantum Hackathon project built around a real investigati
 
 **Judge-ready project description and quick-start:** [Qollab submission copy](docs/QOLLAB_SUBMISSION_COPY.md) — draft for the organizer form; not proof of publication or submission.
 
+## Stage 4.2 candidate — Quantum Cross-Examination
+
+ClaimBreak adds a **real pre-run decision challenge** to the quantum investigation: the examiner must publicly **commit a predicted admissible verdict** before using real simulator shots. The measured bitstrings can uphold or overturn that forecast. An incorrect forecast remains visible even after the examiner corrects the final verdict using the same quantum acquisition. This is a consequence-bearing **scientific learning interaction**, not a cosmetic score or a second quantum job.
+
+The standalone Evidence Reviewer now independently checks forecast chronology, resource accounting and forecast support from bitstring counts. It also tracks a four-mission Quantum Trials learning campaign across separately checked Stage 4.2 receipts, without pooling statistics or authenticating their backend origin. Source and verifier unit tests exercise the feature with fixtures, including a prior author-exported IonQ simulator record; **Stage 4.2 itself has NOT yet been observed running inside Qollab's live editor**, and prior Stage 4.1 observations must not be relabeled as Stage 4.2. Import/paste the updated `qollab/main.js` into Qollab before any live claim or official submission.
+
+See [Stage 4.2 experience and truth boundary](docs/CROSS_EXAMINATION.md).
+
 ## Two interconnected product workflows
 
 | Live Court / Qollab runtime | Evidence Reviewer / standalone HTML |

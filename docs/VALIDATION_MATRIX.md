@@ -16,3 +16,17 @@
 | Official hackathon submission | Separate action required | BLOCKED |
 
 Evidence integrity note: observed sample files are *user-supplied exports*, not IonQ cryptographic signatures. Reviewer PASS indicates internal numerical consistency, not external attestation.
+
+
+## Stage 4.2 feature verification boundary (2026-10-10)
+
+| Behavior | Evidence | Classification |
+|---|---|---|
+| Lock a predicted verdict before acquisition | New Qollab code, offline scenario/assertion tests | LOCAL_CODE_CANDIDATE |
+| Forecast upheld/overturned by actual returned ZZ/XX | Pure-rule tests against existing observed Stage 4.1 count fixture | LOCAL_FIXTURE_VERIFIED (not Stage 4.2 run) |
+| Rejected verdict -> revised verdict; no second quantum job | Existing Stage 4.1 observed runs + Stage 4.2 unchanged one-job path | PARTIAL; Stage 4.2 actual runtime unknown |
+| Independent reviewer audits Stage 4.2 challenge | Synthetic transformed historical receipt and tamper tests | LOCAL_FIXTURE_VERIFIED |
+| Stage 4.2 end-to-end inside Qollab/IonQ | Requires a fresh observed product test | BLOCKED / NOT YET VERIFIED |
+| Signed-out judge access, video, hackathon team submission | Requires organizer UI and external receipts | BLOCKED |
+
+Do not count Stage 4.1's observed remote IonQ receipt as Stage 4.2 runtime evidence.

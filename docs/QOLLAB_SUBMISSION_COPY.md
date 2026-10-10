@@ -13,42 +13,51 @@ Don't trust the claim. Design the test.
 
 ## Short description
 
-An interactive quantum evidence court: choose a measurement protocol before execution, challenge an entanglement claim with real simulator counts and confidence bounds, reject unsupported verdicts, and independently audit the exported evidence.
+A quantum cross-examination game where your scientific prediction is locked *before* the simulator runs — and actual quantum measurements can prove you wrong. Choose the measurement basis and shots, correct unsupported verdicts, and let an independent reviewer audit the entire challenge.
 
-## Full description (English — ready to paste)
+## Full description (English — use after Stage 4.2 is live-tested in Qollab)
 
-**Perfect correlation is not proof of entanglement.** A Bell pair and a separable source can both show perfect agreement when measured only in the Z basis. ClaimBreak turns this scientific trap into an interactive investigation: you become the examiner and must choose the experimental protocol **before** collecting evidence.
+**What if the quantum computer could cross-examine the scientist — not just the claim?**
 
-Run Qiskit circuits in Qollab, using its supported simulator backends, to investigate three controlled quantum sources. Each case presents a precise claim. The app returns actual shot counts from the selected backend, computes ZZ and XX correlations and uncertainty bounds, and permits only decisions supported by the declared measurements. You can certify an entangled Bell source, refute a specific overstated fidelity assertion, or **abstain** when the selected protocol does not provide enough evidence.
+Two sources can agree perfectly in the Z basis, even when only one is entangled. Most quantum visualizations show you the answers. **ClaimBreak makes you risk being wrong before the answers exist.**
 
-The most revealing case is **B**, a separable imitation: it can mimic the Bell source in Z measurements, but the added X basis exposes the missing evidence. A claim of Bell-state fidelity of at least 90% can be refuted using the appropriate confidence upper bound. An unsupported certification is refused; the examiner can correct the decision **without rerunning the quantum job**.
+You enter the Evidence Court as the examiner. A claimant asserts that a hidden quantum source is entangled, separable, or at least 90% faithful to Bell Φ+. You must choose the actual experimental basis (Z-only, ZZ+XX or ZZ−XX), commit a genuine simulator shot budget, and **lock your predicted verdict before a single quantum job starts**.
 
-The workflow continues beyond a chart: export the evidence JSON, then open the standalone **Evidence Reviewer**, which independently recalculates the statistics from bitstring counts, checks decision consistency, and flags arithmetic or event-history contradictions. Reviewers can inspect multiple receipts and compare different backends without improperly pooling their results.
+Qiskit then builds and runs the selected circuit on the Qollab backend. Real bitstring counts — not a scripted verdict — produce the parity correlations, entanglement witness and one-sided confidence bounds. You may discover that your own forecast was unsupported. That mistake cannot be erased. You can challenge the evidence, submit a justified conclusion or abstain; unsupported verdicts are explicitly refused and a correction is possible **without buying another quantum experiment**.
 
-This is a working **quantum-literacy and scientific-claim-evaluation tool**, not a fraud accusation engine. Its quantum backend matters to the decision: changing experimental data changes the permitted outcome. Controlled sources and simulator runs make the lesson reproducible; the rejected-decision history and independent review desk make the evidence accountable.
+Three controlled cases create three profoundly different lessons:
+- **The entangled witness:** Bell Φ+ becomes certifiable when two appropriate observables are measured.
+- **The perfect-correlation trap:** a separable GHZ-purified imitation can match the Bell source in ZZ, but measuring XX may refute an exaggerated Φ+ fidelity claim.
+- **The wrong-witness trap:** Bell Φ− demands the ZZ−XX witness; choosing a different basis combination can miss a genuine quantum property.
 
-**What is verified:** sampled end-to-end Qiskit BasicSimulator runs across positive, negative and abstention cases, plus an author-exported **IonQ Simulator** Case B receipt with a confidence upper bound of approximately **0.829** for the tested `F(Phi+) >= 0.90` assertion. That is simulator evidence, **not** a physical IonQ QPU claim or independently signed backend attestation. Public Qollab access and final submission require separate verification.
+Even 512 shots in the wrong measurement basis cannot buy the missing information. The player experiences the difference between **more data** and **the right quantum experiment**.
+
+The second half of the product is an independent, offline **Evidence Reviewer**. Import your receipt, and it recalculates the witness and confidence bounds from measured bitstrings. For Stage 4.2 receipts, it also checks that your forecast preceded the backend results, that the verdict did not get rewritten after the fact, and that the reported quantum resources and corrected decision history are consistent. A fabricated but internally consistent receipt is not cryptographically authenticated.
+
+**What makes the challenge unusual:** the quantum computer changes what the player is allowed to believe. The player must make an irreversible forecast, the data can overturn that forecast, and the resulting experience is independently reviewable. This is an interactive lesson in scientific falsifiability and experimental design — **not** a predetermined game result, a trivial quantum random-number generator, or a chart-only dashboard.
+
+**Evidence boundaries:** Qiskit BasicSimulator end-to-end Stage 4.1 cases and an author-exported IonQ Simulator Stage 4.1 Case B result with confidence fidelity upper bound ≈0.829 are observed samples. Stage 4.2 has offline rule and tamper tests but **must be tested inside Qollab before live/production claims**. No physical IonQ QPU result, backend-authenticating signature, broad repeated-run reliability or external adoption is claimed.
 
 **Open-source repository (MIT):** https://github.com/Faadil1/ClaimBreak
 
 **Acknowledgment:** This effort is supported by Qollab & IonQ.
 
-## Judge quick-start — real product first
+## Judge quick-start — actual quantum cross-examination (Stage 4.2 candidate)
 
-1. Open the published Qollab project (after its public-access check); choose **Case B**, the **ZZ + XX** (`plus`) protocol, and **128 shots per setting**. Confirm the configuration is selected before acquisition.
-2. Click **Collect quantum evidence** once. Inspect the actual backend counts, ZZ/XX measurements, and upper fidelity bound. The specific claim under test is `F(Phi+) >= 0.90`, not whether all possible sources are entangled.
-3. Attempt unsupported entanglement certification to see **DECISION REJECTED**, then choose the supported, specific fidelity refutation and observe **DECISION ACCEPTED**, using the same evidence acquisition.
-4. Display and copy the exported JSON. Open the independent reviewer via the repository's root `index.html` (or an independently verified public GitHub Pages reviewer URL, if enabled). Import the receipt, recalculate, inspect the verdict trail, and export the reviewer report.
-5. Explore the countercases: **A** with ZZ + XX certifies Bell Phi+; **C** with ZZ - XX reveals Bell Phi−; **Z-only** appropriately abstains. These paths have author-reported sampled BasicSimulator evidence; do not imply all configurations or repeated hardware reliability are verified.
+1. Open a verified public Qollab project after the Stage 4.2 runtime test. Choose **Case B, ZZ+XX, 128 shots** and **predict CERTIFY ENTANGLEMENT**. This is your pre-run wager — deliberately test a plausible but unjustified assumption.
+2. Click **Lock forecast & collect real quantum evidence** once. Read the measured ZZ and XX and the confidence upper bound for the exact ≥0.90 Bell-fidelity promise. If the returned counts support refutation, the original certification forecast should be **OVERTURNED**.
+3. Attempt the unjustified certification and see **DECISION REJECTED**. Correct the verdict without another quantum job, or abstain if the actual measurement does not resolve the claim. The rejected forecast stays in history.
+4. Export the JSON; open the independent reviewer. It recomputes the claim assessment and checks the **precommit event's timestamp, order, shots, forecast, recovery trail and same-job resource accounting**.
+5. For a second learning journey, run Z-only against A/B and see that even perfect parity agreement does not prove entanglement. Or challenge Case C with the minus witness.
 
-## 60-second voiceover / quick judge walkthrough
+## 60-second voiceover / signature story
 
-> Here is the mistake ClaimBreak was built to expose: two sources can produce the same perfect Z-basis correlation, while only one is entangled. First, I lock the experimental basis and shot count. Then Qiskit executes the selected circuit, and the measured bitstrings decide what I can legitimately conclude. In Case B, adding X-basis evidence makes an overstated Bell-fidelity claim refutable. If I try to certify entanglement anyway, the court refuses my verdict but lets me correct it without buying another experiment. Finally, I export the receipt and load it into a separate reviewer, which recomputes the correlations and tests the decision trail. This is not a simulated courtroom around a predetermined verdict: quantum measurement results determine what the product accepts, rejects, or leaves unknown.
+> Before this quantum computer runs, I must say what I think the experiment will prove. I choose a measurement basis, spend real simulator shots, and lock a verdict. Here is the trap: two different quantum sources can look identical in Z. I predict entanglement — but the second measurement basis can overturn me. ClaimBreak refuses my unsupported verdict, yet lets me correct my scientific conclusion without running another quantum circuit. The mistake is not erased. When I hand the receipt to an independent reviewer, it recomputes the quantum statistics and verifies that my forecast came **before** the measurement. This is how quantum computing becomes more than a visualization: it teaches the difference between confidence, evidence and what we are actually allowed to claim.
 
 ## Non-negotiable publication / submission reality
 
 - **Qollab:** verify the current published project page as a signed-out judge, including runnable Qiskit code and Run workflow. The existing author-editor link does not prove public access.
-- **Source and license:** keep the linked GitHub repository public and MIT; copy the tested Stage 4.1 files from `qollab/` into the final Qollab editor panes when necessary.
+- **Source and license:** keep the linked GitHub repository public and MIT; copy Stage 4.2 into the Qollab editor only when the release candidate passes a real Qiskit backend/browser test. Otherwise, submit the verified Stage 4.1 baseline rather than a broken upgrade.
 - **Video:** record and share an actually accessible 2–3-minute video. The 60-second voiceover above is only a script segment, not a finished video.
 - **Reviewer:** the root `index.html` already works locally for receipt review. Include a GitHub Pages link **only after** enabling Pages and verifying a public browser visit. Do not claim it is live by URL convention.
 - **Completion:** publishing or autosaving a Qollab project does **not** prove the hackathon's **separate final team submission**. Complete that action in the organizer UI and preserve the confirmation receipt/screenshot.
