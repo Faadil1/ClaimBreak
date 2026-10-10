@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {verifyReceipt} from '../reviewer/verifier.mjs';
+import {verifyReceipt,campaignProgress} from '../reviewer/verifier.mjs';
 
 // Extract the EXACT pure rules embedded in the single-file Qollab runtime.
 // This tests shipped logic, not a duplicated approximation.
@@ -107,4 +107,43 @@ test('live source is still one quantum job, not a synthetic future run',()=>{
   assert.ok(source.includes('CHALLENGE_FORECAST_LOCKED'));
   assert.ok(source.includes('state.challenge.forecast'));
   assert.ok(source.includes("if(act==='start'&&state.phase==='setup'&&startResolve&&state.challenge.forecast)"));
+});
+
+
+const campaignMock=(caseId,protocol,verdict,jobId,status='PASS',version='stage4.2')=>({
+  status,record:{version,configuration:{caseId,protocol},decision:{verdict,supported:true},
+    challenge:{forecast:verdict},execution:{jobId}}
+});
+test('four-stage quantum campaign advances only from separate consistent Stage 4.2 receipts',()=>{
+  const records=[
+    campaignMock('A','plus','CERTIFIED_ENTANGLEMENT','synthetic-a'),
+    campaignMock('B','plus','REFUTE_SPECIFIC_CLAIM','synthetic-b'),
+    campaignMock('C','minus','REFUTE_SPECIFIC_CLAIM','synthetic-c'),
+    campaignMock('B','z','NOT_ESTABLISHED','synthetic-z')
+  ];
+  const result=campaignProgress(records);
+  assert.equal(result.complete,4);
+  assert.equal(result.total,4);
+  assert.ok(result.quantumRunsNotPooled);
+  assert.equal(result.status,'SESSION_RECEIPT_CONSISTENCY_ONLY__BACKEND_AUTHENTICITY_UNVERIFIED');
+  assert.ok(result.missions.every(x=>x.complete));
+});
+test('campaign cannot grant progress from failed audit, old version or reused job',()=>{
+  const records=[
+    campaignMock('A','plus','CERTIFIED_ENTANGLEMENT','duplicate'),
+    campaignMock('B','plus','REFUTE_SPECIFIC_CLAIM','duplicate'),
+    campaignMock('C','minus','REFUTE_SPECIFIC_CLAIM','unverified','FAIL'),
+    campaignMock('B','z','NOT_ESTABLISHED','stage4.1','PASS','stage4.1')
+  ];
+  const result=campaignProgress(records);
+  assert.equal(result.complete,1);
+  assert.equal(result.missions[0].complete,true);
+  assert.equal(result.missions[1].complete,false);
+  assert.equal(result.missions[2].complete,false);
+  assert.equal(result.missions[3].complete,false);
+});
+test('campaign never pools statistical evidence from separate quantum runs',()=>{
+  const r=campaignProgress([]);
+  assert.equal(r.complete,0);
+  assert.ok(r.quantumRunsNotPooled);
 });
