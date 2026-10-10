@@ -89,6 +89,40 @@ export function verifyReceipt(input) {
     const requiredEvent=record.decision.supported?'DECISION_ACCEPTED':'DECISION_REJECTED';
     if(String(record.version||'').startsWith('stage4')) add('Final decision event matches support status',eventTypes.includes(requiredEvent));
   } else warn('No committed or rejected decision in this receipt');
+  // Stage 4.2: re-evaluate the player's precommitted strategy from raw counts,
+  // rather than trusting the copied on-screen challenge assessment.
+  if(record.version==='stage4.2'){
+    const ch=record.challenge??{};
+    const lockEvents=(record.events??[]).filter(x=>x.type==='CHALLENGE_FORECAST_LOCKED');
+    const lock=lockEvents[0];
+    const options=['CERTIFIED_ENTANGLEMENT','REFUTE_SPECIFIC_CLAIM','NOT_ESTABLISHED'];
+    add('One legal pre-measurement player forecast was recorded',
+      lockEvents.length===1 && options.includes(ch.forecast) && ch.forecast===lock?.detail?.forecast);
+    const lockTime=Date.parse(lock?.utc??'');
+    const acquiredTime=Date.parse(complete??'');
+    add('Player forecast precedes the quantum backend result',
+      Number.isFinite(lockTime)&&Number.isFinite(acquiredTime)&&lockTime<=acquiredTime&&
+      eventTypes.indexOf('CHALLENGE_FORECAST_LOCKED')<eventTypes.indexOf('LIVE_QUANTUM_RUN_COMPLETED'));
+    add('Precommit matches actual shot/basis configuration',
+      lock?.detail?.shots===cfg.shots && lock?.detail?.protocol===cfg.protocol);
+    const challengeRefutable=id==='B'?(fidelityUpper!==null&&fidelityUpper<.90):id==='C'?certified:false;
+    const supported=ch.forecast==='CERTIFIED_ENTANGLEMENT'?certified:
+      ch.forecast==='REFUTE_SPECIFIC_CLAIM'?challengeRefutable:
+      ch.forecast==='NOT_ESTABLISHED'?!certified&&!challengeRefutable:false;
+    add('Challenge forecast independently graded against quantum counts',ch.forecastSupported===supported);
+    const attempts=Array.isArray(record.decisionHistory)?record.decisionHistory:[];
+    const accepted=attempts.find(x=>x.supported)??null;
+    const expectedStatus=!accepted?'AWAITING_ADMISSIBLE_VERDICT':
+      supported?'FORECAST_UPHELD':'FORECAST_OVERTURNED';
+    add('Challenge outcome matches accepted verdict and recovery history',
+      ch.status===expectedStatus && ch.attemptCount===attempts.length &&
+      ch.acceptedVerdict===(accepted?.verdict??null) &&
+      ch.caseResolved===Boolean(accepted&&accepted.verdict!=='NOT_ESTABLISHED'));
+    add('Game-resource statement is tied to the same actual quantum job',
+      ch.resourceUse?.quantumJobs===1&&
+      ch.resourceUse?.shotsPerSetting===cfg.shots&&
+      ch.resourceUse?.measuredSettings===(dual?2:1));
+  }
   // A receipt with internally valid calculations is still NOT a device attestation.
   warn('External backend authenticity cannot be established from user-supplied JSON');
   const status=checks.some(c=>!c.pass&&c.severity==='error')?'FAIL':'PASS';
