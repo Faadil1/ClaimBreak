@@ -222,6 +222,11 @@ function supportsVerdict(verdict,e,caseId,auditPassed,customBlueprint=null) {
     const refutable = caseId === 'B' ? e.fidelityUpper !== null && e.fidelityUpper < 0.90
       : caseId === 'C' ? e.certified === true
       : caseId === 'D'?supportsVerdict('REFUTE_SPECIFIC_CLAIM',e,caseId,auditPassed,customBlueprint):false;
+    // A fidelity threshold is a different claim from entanglement itself.
+    // No lower fidelity-confidence bound is computed by this limited protocol,
+    // so absent a supported refutation, the minimum-fidelity claim is unresolved.
+    if (caseId === 'B' || (caseId === 'D' &&
+        validateCustomBlueprint(customBlueprint).claimType === 'FIDELITY_MIN')) return !refutable;
     return !e.certified && !refutable;
   }
   return false;
@@ -233,7 +238,9 @@ function challengeAssessment(forecast,e,caseId,auditPassed,history,shots,protoco
   return {
     forecast, forecastSupported:precommitSupported, attemptCount:history.length,
     acceptedVerdict:accepted?.verdict ?? null,
-    caseResolved:Boolean(accepted && accepted.verdict!=='NOT_ESTABLISHED'),
+    caseResolved:Boolean(accepted && accepted.verdict!=='NOT_ESTABLISHED' &&
+      (!(caseId==='B'||(caseId==='D'&&customBlueprint?.claimType==='FIDELITY_MIN')) ||
+        accepted.verdict==='REFUTE_SPECIFIC_CLAIM')),
     status: !accepted ? 'AWAITING_ADMISSIBLE_VERDICT' :
       precommitSupported ? 'FORECAST_UPHELD' : 'FORECAST_OVERTURNED',
     resourceUse:{quantumJobs:1,shotsPerSetting:shots,measuredSettings:protocol==='z'?1:2},
@@ -396,7 +403,7 @@ function decisionExplanation(v,ok) {
       ? 'The upper confidence bound contradicts the claimed Bell Φ+ fidelity threshold.'
       : 'A valid entanglement witness contradicts the claim that the source is separable.')
     : 'These measured observations cannot refute the specific supplied claim. Insufficient proof is not proof of fraud, separability or falsity.';
-  return ok?'This experimental record is insufficient to establish certification or refute the specific claim.':'A stronger conclusion is supported by the collected evidence; inspect the displayed bound.';
+  return ok?'The submitted claim is not resolved by this evidence at the declared confidence threshold; other quantum properties may still be established.':'The submitted claim already has a supported resolution from the evidence; inspect its bounds.';
 }
 function exportRecord() {
   if (!state.execution || !state.evidence) return;
