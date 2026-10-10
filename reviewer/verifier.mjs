@@ -128,3 +128,42 @@ export function verifyReceipt(input) {
   const status=checks.some(c=>!c.pass&&c.severity==='error')?'FAIL':'PASS';
   return {status,checks,computed,record};
 }
+
+
+/**
+ * Four independent quantum-learning missions spanning separate receipts.
+ * This is a SESSION-ONLY learning record, NOT an authenticated leaderboard,
+ * an aggregate confidence statement, or a claim of backend provenance.
+ */
+export function campaignProgress(reviews) {
+  const safe=Array.isArray(reviews)?reviews:[];
+  const missions=[
+    {id:'THE_BELL_WITNESS',title:'The Bell Witness',description:'Certify an entangled Φ+ source with the correct two-basis witness',
+      match:r=>r.configuration?.caseId==='A'&&r.configuration?.protocol==='plus'&&r.decision?.verdict==='CERTIFIED_ENTANGLEMENT'},
+    {id:'THE_CORRELATION_TRAP',title:'The Correlation Trap',description:'Refute the ≥90% fidelity bluff using ZZ and XX evidence',
+      match:r=>r.configuration?.caseId==='B'&&r.configuration?.protocol==='plus'&&r.decision?.verdict==='REFUTE_SPECIFIC_CLAIM'},
+    {id:'THE_HIDDEN_PHASE',title:'The Hidden Phase',description:'Reveal Φ− entanglement with the minus witness',
+      match:r=>r.configuration?.caseId==='C'&&r.configuration?.protocol==='minus'&&r.decision?.verdict==='REFUTE_SPECIFIC_CLAIM'},
+    {id:'THE_RIGHT_TO_ABSTAIN',title:'The Right to Abstain',description:'Know that Z-only evidence cannot establish entanglement',
+      match:r=>r.configuration?.protocol==='z'&&r.decision?.verdict==='NOT_ESTABLISHED'}
+  ];
+  const claimedJobs=new Set();
+  const eligible=[];
+  safe.forEach((item,index)=>{
+    const record=item?.record;
+    if(item?.status!=='PASS'||record?.version!=='stage4.2'||!record.challenge||
+       record.decision?.supported!==true) return;
+    const jobId=record.execution?.jobId;
+    if(jobId&&claimedJobs.has(jobId))return;
+    if(jobId)claimedJobs.add(jobId);
+    eligible.push({record,index});
+  });
+  const result=missions.map(m=>{
+    const hit=eligible.find(({record})=>m.match(record));
+    return {id:m.id,title:m.title,description:m.description,
+      complete:Boolean(hit),receiptIndex:hit?.index??null};
+  });
+  return {status:'SESSION_RECEIPT_CONSISTENCY_ONLY__BACKEND_AUTHENTICITY_UNVERIFIED',
+    complete:result.filter(x=>x.complete).length,total:result.length,missions:result,
+    quantumRunsNotPooled:true,source:'INDEPENDENTLY_RECALCULATED_STAGE4_2_RECEIPTS'};
+}
