@@ -1,4 +1,4 @@
-// CLAIMBREAK STAGE 4.2 — Cross-Examination: commit a forecast, spend quantum shots, and face the result.
+// CLAIMBREAK STAGE 4.3 EXPERIMENTAL — Open Challenge Exchange: author a real circuit and test an independently chosen claim.
 // Hardening pass: honest provenance, decision outcome events, analytical reliability audit, export and recovery.
 // Intended for Qollab's JS/Qiskit project shape. Keep starter index.html (#container).
 // The Qollab runtime injects `backend`. Never hardcode a QPU or credentials.
@@ -9,7 +9,7 @@
 import { QuantumCircuit } from 'qiskit';
 
 const ALPHA = 0.01; // predeclared ONE selected one-sided test per execution
-const VERSION = 'stage4.2';
+const VERSION = 'stage4.3';
 const CASES = {
   A: {
     label: 'Source A', docket: 'FILE / 001', claim: 'The submitted source is entangled.',
@@ -26,6 +26,12 @@ const CASES = {
     label: 'Source C', docket: 'FILE / 003', claim: 'The submitted two-qubit state is separable.',
     briefing: 'An ordinary witness reportedly failed. Can a different prespecified witness disprove separability?',
     truth: 'Entangled Bell state |Φ−⟩', explanation: 'Bell |Φ−⟩ has ZZ = +1 and XX = −1. The ZZ − XX witness can establish entanglement.'
+  },
+  D: {
+    label: 'Open-source challenge', docket: 'FILE / OPEN', claim: 'A user-authored claim about a real custom quantum circuit.',
+    briefing: 'Create or import a challenge blueprint. Your choices compile into a new backend circuit, not a replay of source A/B/C.',
+    truth: 'User-defined circuit — gate operations shown in exported blueprint',
+    explanation: 'The source is custom. This app checks witness and fidelity bounds from measured counts, not the blueprint’s physical authenticity.'
   }
 };
 const PROTOCOLS = {
@@ -39,7 +45,8 @@ if (!root) throw new Error('ClaimBreak requires the Qollab starter index.html el
 const state = {
   phase: 'setup', selection: { caseId:'A', protocol:'plus', shots:128 },
   execution:null, evidence:null, decision:null, decisionHistory:[], events:[], error:null, selectedHypothesis:null, auditChecks:null,
-  challenge:{forecast:null, locked:false}
+  challenge:{forecast:null, locked:false},
+  custom:{gates:'H0 CX01',claimType:'FIDELITY_MIN',threshold:0.90}
 };
 let startResolve = null;
 const isoNow = () => new Date().toISOString();
@@ -56,9 +63,47 @@ function backendLabel() {
   return 'Qollab-selected backend (device class unverified)';
 }
 
+// OPEN CHALLENGE SOURCE — whitelisted small circuits avoid arbitrary code execution.
+// This is intentionally not a general QASM interpreter; the author creates a
+// previously unseen source and an independently checkable precise claim.
+const SOURCE_GATES=new Set(['H0','H1','Z0','Z1','CX01','CX10']);
+const CLAIM_TYPES=new Set(['ENTANGLED','SEPARABLE','FIDELITY_MIN']);
+function validateCustomBlueprint(raw) {
+  if(!raw || typeof raw!=='object'||Array.isArray(raw)) throw new Error('Challenge must be a JSON object.');
+  const text=String(raw.gates??'').trim().toUpperCase();
+  if(text.length>110) throw new Error('Too many circuit gates.');
+  const tokens=text.split(/\\s+/).filter(Boolean);
+  if(tokens.length<1||tokens.length>12||tokens.some(g=>!SOURCE_GATES.has(g)))
+    throw new Error('Only H0, H1, Z0, Z1, CX01 and CX10 are allowed (1–12 gates).');
+  if(!CLAIM_TYPES.has(raw.claimType)) throw new Error('Invalid claim type.');
+  const threshold=Number(raw.threshold);
+  if(!Number.isFinite(threshold)||threshold<0.60||threshold>0.95)
+    throw new Error('Fidelity threshold must be 0.60 to 0.95.');
+  return {gates:tokens.join(' '),claimType:raw.claimType,threshold};
+}
+function activeClaim() {
+  if(state.selection.caseId!=='D') return CASES[state.selection.caseId].claim;
+  const b=validateCustomBlueprint(state.custom);
+  return b.claimType==='ENTANGLED'?'The user-authored quantum source is entangled.':
+    b.claimType==='SEPARABLE'?'The user-authored quantum source is separable.':
+    'The source has fidelity with |Φ+⟩ of at least '+Math.round(100*b.threshold)+'%.';
+}
+function applyCustomGates(circuit,offset,blueprint) {
+  const b=validateCustomBlueprint(blueprint);
+  for(const gate of b.gates.split(' ')){
+    if(gate==='H0')circuit.h(offset);
+    else if(gate==='H1')circuit.h(offset+1);
+    else if(gate==='Z0')circuit.z(offset);
+    else if(gate==='Z1')circuit.z(offset+1);
+    else if(gate==='CX01')circuit.cx(offset,offset+1);
+    else if(gate==='CX10')circuit.cx(offset+1,offset);
+  }
+}
+// END OPEN CHALLENGE SOURCE
+
 // The classical mixture MUST be a mixed two-qubit state within EACH quantum job,
 // not a single random |00> or |11> choice reused across all shots.
-function buildCircuit(caseId, protocol) {
+function buildCircuit(caseId, protocol,customBlueprint=state.custom) {
   const pairQubits = caseId === 'B' ? 3 : 2; // B uses a purification ancilla.
   const settings = protocol === 'z' ? ['Z'] : ['Z','X'];
   const nQubits = pairQubits * settings.length;
@@ -73,8 +118,8 @@ function buildCircuit(caseId, protocol) {
       circuit.h(env); circuit.cx(env, qA); circuit.cx(env, qB);
     } else {
       qA = offset; qB = offset + 1;
-      circuit.h(qA); circuit.cx(qA, qB);
-      if (caseId === 'C') circuit.z(qA);
+      if(caseId==='D')applyCustomGates(circuit,offset,customBlueprint);
+      else {circuit.h(qA); circuit.cx(qA,qB); if(caseId==='C')circuit.z(qA);}
     }
     if (settings[k] === 'X') { circuit.h(qA); circuit.h(qB); }
     groups.push({ setting: settings[k], qA, qB });
@@ -160,24 +205,30 @@ function theoreticalFalseCertificationRate(shots,threshold) {
 }
 
 // PURE CHALLENGE RULES — independently unit tested offline.
-function supportsVerdict(verdict,e,caseId,auditPassed) {
+function supportsVerdict(verdict,e,caseId,auditPassed,customBlueprint=null) {
   if(!auditPassed || !e) return false;
   if (verdict === 'CERTIFIED_ENTANGLEMENT') return e.certified === true;
   if (verdict === 'REFUTE_SPECIFIC_CLAIM') {
     if (caseId === 'B') return e.fidelityUpper !== null && e.fidelityUpper < 0.90;
     if (caseId === 'C') return e.certified === true;
+    if (caseId === 'D') {
+      const b=validateCustomBlueprint(customBlueprint);
+      return b.claimType==='SEPARABLE'?e.certified===true:
+        b.claimType==='FIDELITY_MIN'&&e.fidelityUpper!==null&&e.fidelityUpper<b.threshold;
+    }
     return false;
   }
   if (verdict === 'NOT_ESTABLISHED') {
     const refutable = caseId === 'B' ? e.fidelityUpper !== null && e.fidelityUpper < 0.90
-      : caseId === 'C' ? e.certified === true : false;
+      : caseId === 'C' ? e.certified === true
+      : caseId === 'D'?supportsVerdict('REFUTE_SPECIFIC_CLAIM',e,caseId,auditPassed,customBlueprint):false;
     return !e.certified && !refutable;
   }
   return false;
 }
-function challengeAssessment(forecast,e,caseId,auditPassed,history,shots,protocol) {
+function challengeAssessment(forecast,e,caseId,auditPassed,history,shots,protocol,customBlueprint=null) {
   const valid=['CERTIFIED_ENTANGLEMENT','REFUTE_SPECIFIC_CLAIM','NOT_ESTABLISHED'].includes(forecast);
-  const precommitSupported=valid && supportsVerdict(forecast,e,caseId,auditPassed);
+  const precommitSupported=valid && supportsVerdict(forecast,e,caseId,auditPassed,customBlueprint);
   const accepted=history.find(d=>d.supported) || null;
   return {
     forecast, forecastSupported:precommitSupported, attemptCount:history.length,
@@ -190,7 +241,8 @@ function challengeAssessment(forecast,e,caseId,auditPassed,history,shots,protoco
   };
 }
 function allowedDecision(verdict) {
-  return supportsVerdict(verdict,state.evidence,state.selection.caseId,state.auditChecks?.status==='PASS');
+  return supportsVerdict(verdict,state.evidence,state.selection.caseId,state.auditChecks?.status==='PASS',
+    state.selection.caseId==='D'?state.custom:null);
 }
 // END PURE CHALLENGE RULES
 
