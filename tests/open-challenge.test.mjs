@@ -22,14 +22,16 @@ class FakeCircuit{
   cx(a,b){this.ops.push(['cx',a,b]);}
   measure(a,b){this.ops.push(['measure',a,b]);}
 }
+function quantumCircuitFactory(qubits,bits){return new FakeCircuit(qubits,bits);}
 const engine=new Function('QuantumCircuit','state',
   customSource+'\n'+source.slice(circuitStart,circuitEnd)+'\n'+pureVerdicts+
   '\nreturn {validateCustomBlueprint,applyCustomGates,buildCircuit,supportsVerdict,challengeAssessment};'
-)(FakeCircuit,{custom:Default});
+)(quantumCircuitFactory,{custom:Default});
 
 function stage43Synthetic(){
   const n=128, alpha=.01, margin=2*Math.sqrt(Math.log(1/alpha)/n), now='2026-10-10T17:55:04Z';
   const blueprint={...Default};
+  const immutableLock={...blueprint}; // A later edit must not mutate pre-run history by reference.
   const accepted={attempt:1,verdict:'REFUTE_SPECIFIC_CLAIM',supported:true,explanation:'SYNTHETIC TEST ONLY',atUtc:'2026-10-10T17:55:05Z'};
   return {
     product:'ClaimBreak Quantum Evidence Court',version:'stage4.3',
@@ -43,7 +45,7 @@ function stage43Synthetic(){
     rawCounts:{'0000':64,'1111':64},
     decision:accepted,decisionHistory:[accepted],
     events:[
-      {utc:'2026-10-10T17:55:00Z',type:'CUSTOM_CHALLENGE_BLUEPRINT_LOCKED',detail:blueprint},
+      {utc:'2026-10-10T17:55:00Z',type:'CUSTOM_CHALLENGE_BLUEPRINT_LOCKED',detail:immutableLock},
       {utc:'2026-10-10T17:55:01Z',type:'CHALLENGE_FORECAST_LOCKED',
         detail:{forecast:'REFUTE_SPECIFIC_CLAIM',shots:n,protocol:'plus'}},
       {utc:'2026-10-10T17:55:02Z',type:'EXPERIMENT_PREDECLARED',detail:{caseId:'D',protocol:'plus',shots:n}},
