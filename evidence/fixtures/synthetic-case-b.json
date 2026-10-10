@@ -1,0 +1,69 @@
+{
+  "product": "ClaimBreak Quantum Evidence Court",
+  "version": "stage4.1",
+  "fixtureNotice": "SYNTHETIC_FIXTURE_NOT_LIVE__TEST_ONLY",
+  "configuration": {
+    "caseId": "B",
+    "protocol": "plus",
+    "shots": 128,
+    "predeclaredBeforeQuantumRun": true
+  },
+  "execution": {
+    "backendName": "synthetic_test_fixture_NO_BACKEND_RUN",
+    "jobId": "SYNTHETIC-NOT-A-QUANTUM-JOB",
+    "shots": 128,
+    "qubits": 6,
+    "settings": [
+      "Z",
+      "X"
+    ],
+    "quantumJobs": 1,
+    "rawCounts": {
+      "000000": 32,
+      "000111": 32,
+      "010000": 32,
+      "010111": 32
+    }
+  },
+  "protocol": {
+    "alphaPerRun": 0.01
+  },
+  "evidence": {
+    "zz": 1,
+    "xx": 0,
+    "S": 1,
+    "margin": 0.3793567823462866,
+    "lower": 0.6206432176537134,
+    "fidelityUpper": 0.8448391955865716,
+    "certified": false,
+    "shotsReturned": 128,
+    "protocol": "plus"
+  },
+  "decision": {
+    "attempt": 1,
+    "verdict": "REFUTE_SPECIFIC_CLAIM",
+    "supported": true,
+    "explanation": "Synthetic fixture, not real quantum evidence."
+  },
+  "decisionHistory": [
+    {
+      "attempt": 1,
+      "verdict": "REFUTE_SPECIFIC_CLAIM",
+      "supported": true
+    }
+  ],
+  "events": [
+    {
+      "utc": "2026-10-10T00:00:00.000Z",
+      "type": "EXPERIMENT_PREDECLARED"
+    },
+    {
+      "utc": "2026-10-10T00:00:01.000Z",
+      "type": "LIVE_QUANTUM_RUN_COMPLETED"
+    },
+    {
+      "utc": "2026-10-10T00:00:02.000Z",
+      "type": "DECISION_ACCEPTED"
+    }
+  ]
+}
