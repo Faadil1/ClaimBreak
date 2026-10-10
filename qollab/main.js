@@ -226,7 +226,7 @@ const css = `
 @media(max-width:760px){#cb3 .grid{grid-template-columns:1fr}#cb3 .page{padding:14px}#cb3 .card{padding:16px}#cb3 .metrics{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){#cb3 *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 `;
-root.innerHTML = `<style>${css}</style><main id="cb3"><header class="header"><div class="eyebrow">CLAIMBREAK / QUANTUM EVIDENCE COURT / STAGE 4</div><h1>Don't trust the claim.<br>Design the test.</h1><p class="muted">A live Qiskit experiment. One circuit per Qollab Run. Decisions must not exceed the evidence.</p><span class="tag" id="cb3-tag">AWAITING EXPERIMENT</span></header><div class="page" id="cb3-content" aria-live="polite"></div></main>`;
+root.innerHTML = `<style>${css}</style><main id="cb3"><header class="header"><div class="eyebrow">CLAIMBREAK / QUANTUM CROSS-EXAMINATION / STAGE 4.2</div><h1>Put your scientific certainty<br>on trial.</h1><p class="muted">Commit your prediction. Choose what to measure. Let actual quantum evidence prove you wrong — or uphold your case.</p><span class="tag" id="cb3-tag">AWAITING EXPERIMENT</span></header><div class="page" id="cb3-content" aria-live="polite"></div></main>`;
 const content = root.querySelector('#cb3-content');
 const tag = root.querySelector('#cb3-tag');
 function layout(left, right='') { content.innerHTML = `<div class="grid"><section>${left}</section><aside>${right}</aside></div>`; }
@@ -341,7 +341,7 @@ function exportRecord() {
   };
   let panel=root.querySelector('#cb3-json-panel');
   if(!panel){ panel=document.createElement('section'); panel.id='cb3-json-panel';panel.className='card';content.prepend(panel); }
-  panel.innerHTML=`<div class="eyebrow">Evidence / manual export</div><h2>Copy the exact JSON</h2><p class="fine">This browser may block Blob downloads. Select all JSON, press Ctrl+C, paste into Windows Notepad, then Save as <strong>claimbreak-stage4-1-evidence.json</strong> (All files / UTF-8).</p><div class="actions"><button type="button" data-action="select-json">Select all JSON</button><button type="button" class="outline" data-action="close-json">Close</button></div><textarea id="cb3-json-text" aria-label="Exported evidence JSON" readonly spellcheck="false"></textarea><p class="fine" id="cb3-copy-status">No further quantum job is needed.</p>`;
+  panel.innerHTML=`<div class="eyebrow">Evidence / manual export</div><h2>Copy the exact JSON</h2><p class="fine">This browser may block Blob downloads. Select all JSON, press Ctrl+C, paste into Windows Notepad, then Save as <strong>claimbreak-stage4-2-evidence.json</strong> (All files / UTF-8).</p><div class="actions"><button type="button" data-action="select-json">Select all JSON</button><button type="button" class="outline" data-action="close-json">Close</button></div><textarea id="cb3-json-text" aria-label="Exported evidence JSON" readonly spellcheck="false"></textarea><p class="fine" id="cb3-copy-status">No further quantum job is needed.</p>`;
   panel.querySelector('textarea').value=JSON.stringify(out,null,2);
   panel.scrollIntoView({block:'start',behavior:'auto'});
 }
