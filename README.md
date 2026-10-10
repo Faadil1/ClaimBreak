@@ -16,6 +16,12 @@ A Qollab / IonQ Global Quantum Hackathon project built around a real investigati
 
 **Judge-ready project description and quick-start:** [Qollab submission copy](docs/QOLLAB_SUBMISSION_COPY.md) — draft for the organizer form; not proof of publication or submission.
 
+## Experimental Stage 4.3 — Open Challenge Exchange (NOT QOLLAB-VERIFIED)
+
+The [Open Challenge Exchange](docs/OPEN_CHALLENGE_EXPERIMENT.md) is a **separate unpromoted product bet**, not part of the already observed Stage 4.1 remote-IonQ simulator evidence. A creator authors a new two-qubit gate sequence from H/Z/CX and an exact entanglement/separability/fidelity claim; an examiner can import the portable JSON, design a basis/shot experiment, and send that actual circuit through Qollab. The reviewer independently recalculates the outcome and checks the declared source-lock history, without claiming source secrecy or backend authentication.
+
+**Code and synthetic unit tests ≠ actual Qollab use or user adoption.** The official submission must not silently switch to Stage 4.3 before a real runtime test.
+
 ## Stage 4.2 candidate — Quantum Cross-Examination
 
 ClaimBreak adds a **real pre-run decision challenge** to the quantum investigation: the examiner must publicly **commit a predicted admissible verdict** before using real simulator shots. The measured bitstrings can uphold or overturn that forecast. An incorrect forecast remains visible even after the examiner corrects the final verdict using the same quantum acquisition. This is a consequence-bearing **scientific learning interaction**, not a cosmetic score or a second quantum job.
