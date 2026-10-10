@@ -14,6 +14,8 @@ A Qollab / IonQ Global Quantum Hackathon project built around a real investigati
 
 **Why this matters:** A Bell-entangled pair and a separable classically correlated source can both produce `ZZ=1`. A pretty correlation chart can make a false claim look persuasive. ClaimBreak asks a better question: *what evidence supports this exact assertion, and what is missing?*
 
+**Judge-ready project description and quick-start:** [Qollab submission copy](docs/QOLLAB_SUBMISSION_COPY.md) — draft for the organizer form; not proof of publication or submission.
+
 ## Two interconnected product workflows
 
 | Live Court / Qollab runtime | Evidence Reviewer / standalone HTML |
