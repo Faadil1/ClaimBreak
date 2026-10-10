@@ -42,6 +42,17 @@ This is not a competitive multiplayer leaderboard, open-ended user-uploaded quan
 
 **“What if a quantum computer could challenge not only a scientific claim, but the scientist's own premature certainty?”** Most visualizations show you quantum results. ClaimBreak asks you to commit to a conclusion before measurement, then makes real quantum data decide whether you were right. Wrong scientific judgments have visible, recoverable consequences, and an independent operator can inspect the proof trail. The hardest concept — *why matching outcomes in one measurement basis do not prove entanglement* — becomes a decision you personally risk getting wrong.
 
+## Four-trial campaign — player and independent-reviewer depth
+
+The offline reviewer now organizes **four separate Stage 4.2 receipts** into a session-only learning journey. The `campaignProgress` function is evaluated from independently consistency-checked receipts; an old Stage 4.1 document, a failed audit or a repeated job identifier cannot advance a mission.
+
+1. **The Bell Witness:** a correctly supported A / plus entanglement certification.
+2. **The Correlation Trap:** a B / plus refutation of the ≥90% fidelity promise.
+3. **The Hidden Phase:** a C / minus witness refutation of separability.
+4. **The Right to Abstain:** a Z-only protocol accepted as nondecisive.
+
+Completing these reflects coverage of four learning objectives, **not** statistically pooled evidence or authenticated proof that different simulator jobs actually ran. The reviewer remains offline and session-only, no backend requests or permanent leaderboard. Its claim boundary stays **SESSION_RECEIPT_CONSISTENCY_ONLY**, not verified adoption, QPU use, or campaign competition win.
+
 ## Competitive and execution boundaries
 
 The October 2026 Qollab × IonQ track explicitly values creativity/novelty **alongside technical execution** and offers a `Quantum Unlocked` theme for interactive explanations. This interpretation is based on published organizer descriptions, not a verified score from current rival submissions. Previous Qollab projects include immersive creative works such as Quantum Garden; ClaimBreak should compete on an **evidence-driven, adversarial learning interaction** rather than pretending to be an equally expansive generative world. A winning rank cannot be promised or self-certified.
