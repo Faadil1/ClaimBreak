@@ -332,7 +332,7 @@ function runningView() {
 }
 function evidenceView() {
   const c=CASES[state.selection.caseId]; const e=state.evidence;
-  const claimRefuted = state.selection.caseId==='B' && e.fidelityUpper!==null && e.fidelityUpper<0.90;
+  const claimRefuted = allowedDecision('REFUTE_SPECIFIC_CLAIM');
   const theory = state.decision && state.selection.caseId==='B' && state.selection.protocol==='plus'
     ? {naive:theoreticalFalseCertificationRate(e.shotsReturned,0),
        calibrated:theoreticalFalseCertificationRate(e.shotsReturned,e.margin)} : null;
@@ -345,7 +345,8 @@ function evidenceView() {
     ['NOT_ESTABLISHED','Evidence insufficient']
   ];
   const challenge = challengeAssessment(state.challenge.forecast,e,state.selection.caseId,
-    state.auditChecks.status==='PASS',state.decisionHistory,state.selection.shots,state.selection.protocol);
+    state.auditChecks.status==='PASS',state.decisionHistory,state.selection.shots,state.selection.protocol,
+    state.selection.caseId==='D'?state.custom:null);
   const forecastLabels={CERTIFIED_ENTANGLEMENT:'Certify entanglement',
     REFUTE_SPECIFIC_CLAIM:'Refute submitted claim',NOT_ESTABLISHED:'Evidence insufficient'};
   const parityRail=(name,value)=>`<div class="signal-cell"><div class="eyebrow">${name} / MEASURED</div>
@@ -365,7 +366,11 @@ function evidenceView() {
       ${state.decisionHistory.length>1?'Your incorrect decision attempts remain permanently in this session receipt.':''}</p>`:''}
   </div>`;
   layout(`<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / evidence acquired</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(activeClaim())}</p><p class="fine">Actual measurements from this execution only. No other source has been measured in this Run.</p>${missionBlock}<div class="signal-rail">${parityRail('Z-BASIS / ZZ',e.zz)}${parityRail('X-BASIS / XX',e.xx)}</div><div class="metrics"><div class="metric"><small>ZZ observed</small><strong>${fmt(e.zz)}</strong></div><div class="metric"><small>XX observed</small><strong>${e.xx===null?'NOT MEASURED':fmt(e.xx)}</strong></div><div class="metric"><small>Selected witness S</small><strong>${fmt(e.S)}</strong></div><div class="metric"><small>One-sided margin (α = 0.01)</small><strong>${fmt(e.margin)}</strong></div></div><div class="callout">${scienceLine}</div>
-  ${state.selection.caseId==='B' && e.fidelityUpper!==null?`<div class="callout"><strong>Claim-specific test:</strong> conservative 99% upper bound for fidelity F(Φ+) is <b>${fmt(e.fidelityUpper)}</b>. ${claimRefuted?'This is below the vendor threshold 0.90.':'This does not yet refute the vendor threshold 0.90.'}</div>`:''}
+  ${(state.selection.caseId==='B'||(state.selection.caseId==='D'&&state.custom.claimType==='FIDELITY_MIN'))&&e.fidelityUpper!==null?
+    `<div class="callout"><strong>Claim-specific test:</strong> one-sided 99% upper bound for Bell Φ+ fidelity:
+    <b>${fmt(e.fidelityUpper)}</b>. Declared threshold:
+    <b>${fmt(state.selection.caseId==='D'?state.custom.threshold:0.90)}</b>.
+    ${claimRefuted?'The upper confidence bound is below the declared threshold.':'This evidence does not refute the declared threshold.'}</div>`:''}
   ${theory ? `<details class="card"><summary>Post-verdict reliability lens — mathematical reference (not a new quantum run)</summary><p class="fine">For the ideal separable-mixture model at the witness boundary, an uncalibrated rule S &gt; 1 miscertifies with probability ${pct(theory.naive)}. The fixed, predeclared ${fmt(100*(1-ALPHA))}% one-sided calibrated rule has exact false-certification probability ${pct(theory.calibrated)} at the same sample size. These are exact binomial reference calculations for this ideal model, not measured device error rates, and they do not establish performance under correlated noise.</p></details>` : ''}
   <div class="hint" role="status"><strong>Receipt checks:</strong> ${state.auditChecks.status === 'PASS' ? 'All internal checks passed' : 'Internal inconsistency detected — do not certify'} (${state.auditChecks.checks.filter(x=>x.pass).length}/${state.auditChecks.checks.length}). These checks do not validate QPU calibration.</div>
   <div class="decision"><div class="eyebrow">Decision / commit</div><h2>File your evidence-based verdict</h2><p class="fine">CERTIFIED requires a witness lower bound above 1. REFUTE must contradict the exact submitted claim. An absent violation does not demonstrate separability.</p><div class="actions">${buttons.map(([v,l])=>`<button type="button" class="${v==='NOT_ESTABLISHED'?'outline':''}" data-action="decision" data-value="${v}" ${state.decision?.supported?'disabled':''}>${l}</button>`).join('')}</div>
@@ -387,8 +392,10 @@ function decisionExplanation(v,ok) {
     ? 'The prespecified witness lower bound exceeds the separable-state limit under the stated assumptions.'
     : 'The selected observations do not establish entanglement with the prescribed error bound.';
   if (v==='REFUTE_SPECIFIC_CLAIM') return ok
-    ? (state.selection.caseId==='B'?'The upper confidence bound contradicts the claimed Φ+ fidelity ≥ 0.90.':'A valid witness establishes entanglement, contradicting the source’s separability claim.')
-    : 'The acquired observations do not refute the specific submitted claim. Missing proof is not proof of fraud, separability, or falsity.';
+    ? (state.selection.caseId==='B'||(state.selection.caseId==='D'&&state.custom.claimType==='FIDELITY_MIN')
+      ? 'The upper confidence bound contradicts the claimed Bell Φ+ fidelity threshold.'
+      : 'A valid entanglement witness contradicts the claim that the source is separable.')
+    : 'These measured observations cannot refute the specific supplied claim. Insufficient proof is not proof of fraud, separability or falsity.';
   return ok?'This experimental record is insufficient to establish certification or refute the specific claim.':'A stronger conclusion is supported by the collected evidence; inspect the displayed bound.';
 }
 function exportRecord() {
@@ -408,8 +415,10 @@ function exportRecord() {
       calibratedFalseCertificationProbability:theoreticalFalseCertificationRate(state.evidence.shotsReturned,state.evidence.margin)
     } : null,
     rawCounts:state.execution.rawCounts,decision:state.decision,decisionHistory:state.decisionHistory,
+    customBlueprint:state.selection.caseId==='D'?validateCustomBlueprint(state.custom):null,
     challenge:challengeAssessment(state.challenge.forecast,state.evidence,state.selection.caseId,
-      state.auditChecks.status==='PASS',state.decisionHistory,state.selection.shots,state.selection.protocol),
+      state.auditChecks.status==='PASS',state.decisionHistory,state.selection.shots,state.selection.protocol,
+      state.selection.caseId==='D'?state.custom:null),
     events:state.events
   };
   let panel=root.querySelector('#cb3-json-panel');
@@ -427,16 +436,45 @@ root.addEventListener('change',ev=>{
   if(field==='shots'&&[64,128,256,512].includes(Number(ev.target.value)))state.selection.shots=Number(ev.target.value);
   if(field==='forecast'&&['CERTIFIED_ENTANGLEMENT','REFUTE_SPECIFIC_CLAIM','NOT_ESTABLISHED',''].includes(ev.target.value))
     state.challenge.forecast=ev.target.value || null;
+  if(state.selection.caseId==='D'&&field==='gates')state.custom.gates=ev.target.value;
+  if(state.selection.caseId==='D'&&field==='claimType'&&CLAIM_TYPES.has(ev.target.value))
+    state.custom.claimType=ev.target.value;
+  if(state.selection.caseId==='D'&&field==='threshold'&&[.60,.70,.80,.90,.95].includes(Number(ev.target.value)))
+    state.custom.threshold=Number(ev.target.value);
   if(field)render();
 });
 root.addEventListener('click',ev=>{
   const b=ev.target.closest?.('button[data-action]'); if(!b)return;
   const act=b.dataset.action;
   if(act==='start'&&state.phase==='setup'&&startResolve&&state.challenge.forecast){
+    if(state.selection.caseId==='D'){
+      try {state.custom=validateCustomBlueprint(state.custom);}
+      catch(err){window.alert?.(String(err.message));return;}
+      record('CUSTOM_CHALLENGE_BLUEPRINT_LOCKED',{...state.custom});
+    }
     state.challenge.locked=true;
     record('CHALLENGE_FORECAST_LOCKED',{forecast:state.challenge.forecast,shots:state.selection.shots,protocol:state.selection.protocol});
     record('EXPERIMENT_PREDECLARED',{...state.selection});
     const go=startResolve;startResolve=null;go();
+  }
+  if(act==='share-blueprint'&&state.phase==='setup'&&state.selection.caseId==='D'){
+    try {
+      const blueprint=validateCustomBlueprint(state.custom);
+      const out={format:'ClaimBreak-open-challenge-1',blueprint};
+      const box=root.querySelector('#cb3-blueprint');
+      if(box){box.value=JSON.stringify(out,null,2);box.focus();box.select();}
+    }catch(err){window.alert?.(String(err.message));}
+  }
+  if(act==='import-blueprint'&&state.phase==='setup'&&state.selection.caseId==='D'){
+    try {
+      const raw=root.querySelector('#cb3-blueprint')?.value??'';
+      if(raw.length>2048)throw new Error('Challenge JSON exceeds 2 KB.');
+      const obj=JSON.parse(raw);
+      if(obj?.format!=='ClaimBreak-open-challenge-1')
+        throw new Error('Unsupported challenge format.');
+      state.custom=validateCustomBlueprint(obj.blueprint);
+      render();
+    }catch(err){window.alert?.(String(err.message));}
   }
   if(act==='decision'&&state.phase==='evidence'&&!state.decision?.supported){
     const verdict=b.dataset.value;
@@ -460,7 +498,8 @@ async function runOneSelectedExperiment() {
   state.phase='running';render();
   try{
     const selection={...state.selection}; // immutable after the protocol is locked
-    const bundle=buildCircuit(selection.caseId,selection.protocol);
+    const blueprint=selection.caseId==='D'?validateCustomBlueprint(state.custom):null;
+    const bundle=buildCircuit(selection.caseId,selection.protocol,blueprint);
     const bName=backendLabel();
     const job=await backend.run(bundle.circuit,{shots:selection.shots}); // ONE quantum job
     let jobId=null;
