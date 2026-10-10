@@ -83,7 +83,7 @@ function validateCustomBlueprint(raw) {
 }
 function activeClaim() {
   if(state.selection.caseId!=='D') return CASES[state.selection.caseId].claim;
-  const b=validateCustomBlueprint(state.custom);
+  const b=state.custom;
   return b.claimType==='ENTANGLED'?'The user-authored quantum source is entangled.':
     b.claimType==='SEPARABLE'?'The user-authored quantum source is separable.':
     'The source has fidelity with |Φ+⟩ of at least '+Math.round(100*b.threshold)+'%.';
@@ -324,7 +324,7 @@ function setupView() {
     </div>
     <div class="actions"><button type="button" data-action="start" ${!state.challenge.forecast?'disabled':''}>Lock forecast &amp; collect real quantum evidence →</button></div>
     <p class="fine">The Qollab console may say “Running...” while waiting for this click. Select Qiskit Built-in Simulator (24q) in Qollab first. Do not use paid IonQ hardware for this test.</p></div>`,
-    `<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / sealed source</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(activeClaim())}</p><p>${escapeHTML(c.briefing)}</p><div class="callout"><strong>Unknown until decision.</strong> The underlying preparation is concealed before the experiment.</div></div><div class="card"><div class="eyebrow">Protocol integrity</div><p>99% one-sided confidence bound for ONE predeclared witness or fidelity test. Repeated searching across new runs is not covered by this error guarantee.</p><p class="fine">Trusted measurement assumptions apply. No claim of device-independent verification or proven vendor fraud.</p></div>`);
+    `<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / sealed source</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(activeClaim())}</p><p>${escapeHTML(c.briefing)}</p><div class="callout"><strong>${state.selection.caseId==='D'?'Editable circuit, public source':'Source identity hidden in this UI'}.</strong> ${state.selection.caseId==='D'?'The creator shares a transparent gate sequence; the investigator chooses how to measure it. The circuit is never cryptographically secret.':'The underlying preparation is concealed before the experiment.'}</div></div><div class="card"><div class="eyebrow">Protocol integrity</div><p>99% one-sided confidence bound for ONE predeclared witness or fidelity test. Repeated searching across new runs is not covered by this error guarantee.</p><p class="fine">Trusted measurement assumptions apply. No claim of device-independent verification or proven vendor fraud.</p></div>`);
 }
 function runningView() {
   const c=CASES[state.selection.caseId];
