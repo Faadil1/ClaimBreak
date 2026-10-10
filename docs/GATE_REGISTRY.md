@@ -16,7 +16,7 @@ This is an operational record, not a blanket certification. Allowed states: ACTI
 | Runtime / Commit Binding | PROVEN | One circuit/job per Run; decision history tied to same receipt |
 | Deterministic Demo | ACTIVE | Synthetic reviewer fixture is secondary; Qollab live path is primary |
 | Eval-Driven Reliability | ACTIVE | 15 deterministic regression tests; repeat-run probabilistic coverage still needed |
-| Product Depth & Post-Slice Exploitation | ACTIVE | Reviewer adds second operator workflow; no cross-Run persistent server state |
+| Product Depth & Post-Slice Exploitation | ACTIVE | **Material depth gap acknowledged:** Stage 4.1/4.2 are limited to three curated sources, and extra missions/pitch/tests did not create new investigative capability. Stage 4.3 draft adds authored H/Z/CX sources and transferable claims; real Qollab execution, an unfamiliar external investigator and actual user value are still unproven. No terminal/winning-depth claim |
 | Judge Performance Assurance | ACTIVE | Test public no-login reviewer + Qollab project usability |
 | Operational Economics | ACTIVE | Shots per setting, one IonQ job per Run; monitor quotas |
 | External User / Adoption | BLOCKED | No independent evaluator evidence yet |
