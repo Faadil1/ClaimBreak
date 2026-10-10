@@ -114,3 +114,34 @@ test('tampered or late custom source cannot pass independent reviewer',()=>{
 test('real-source gate compiler still dispatches exactly one backend.run',()=>{
   assert.equal((source.match(/await backend\.run\(/g)||[]).length,1);
 });
+
+
+test('minimum fidelity may remain UNKNOWN even when entanglement is certified',()=>{
+  const high={gates:'H0 CX01',claimType:'FIDELITY_MIN',threshold:.95};
+  const e={certified:true,fidelityUpper:1};
+  assert.equal(engine.supportsVerdict('CERTIFIED_ENTANGLEMENT',e,'D',true,high),true);
+  assert.equal(engine.supportsVerdict('REFUTE_SPECIFIC_CLAIM',e,'D',true,high),false);
+  assert.equal(engine.supportsVerdict('NOT_ESTABLISHED',e,'D',true,high),true);
+  const result=engine.challengeAssessment('NOT_ESTABLISHED',e,'D',true,
+    [{verdict:'NOT_ESTABLISHED',supported:true}],128,'plus',high);
+  assert.equal(result.forecastSupported,true);
+  assert.equal(result.caseResolved,false);
+  assert.equal(engine.supportsVerdict('NOT_ESTABLISHED',e,'D',true,
+    {...high,claimType:'SEPARABLE'}),false);
+});
+
+test('independent reviewer accepts claim-specific abstention on high Bell fidelity',()=>{
+  const receipt=stage43Synthetic();
+  receipt.customBlueprint={gates:'H0 CX01',claimType:'FIDELITY_MIN',threshold:.95};
+  receipt.events.find(x=>x.type==='CUSTOM_CHALLENGE_BLUEPRINT_LOCKED').detail={...receipt.customBlueprint};
+  const expected='NOT_ESTABLISHED';
+  receipt.decision={...receipt.decision,verdict:expected,supported:true};
+  receipt.decisionHistory=[{...receipt.decision}];
+  receipt.events.find(x=>x.type==='DECISION_ACCEPTED').detail.verdict=expected;
+  receipt.events.find(x=>x.type==='CHALLENGE_FORECAST_LOCKED').detail.forecast=expected;
+  receipt.challenge={...receipt.challenge,forecast:expected,forecastSupported:true,
+    acceptedVerdict:expected,caseResolved:false,status:'FORECAST_UPHELD'};
+  const reviewed=verifyReceipt(receipt);
+  assert.equal(reviewed.status,'PASS',
+    reviewed.checks.filter(x=>!x.pass&&x.severity==='error').map(x=>x.label).join('; '));
+});
