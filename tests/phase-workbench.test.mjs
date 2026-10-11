@@ -95,7 +95,7 @@ test('exactly one backend.run call remains in Qollab runtime',()=>{
  assert.equal((src.match(/await backend\.run\(/g)||[]).length,1);
 });
 
-test('observed Qollab Stage 4.4 phase run is independently consistent, including rejected verdict',()=>{
+test('observed Stage 4.4 Qollab phase experiment recovers from rejection without a second job',()=>{
  const path=new URL('../evidence/observed/qollab-basic-simulator-phase-xy-stage44-2026-10-11.json',import.meta.url);
  const receipt=JSON.parse(readFileSync(path,'utf8'));
  const review=verifyReceipt(receipt);
@@ -105,7 +105,14 @@ test('observed Qollab Stage 4.4 phase run is independently consistent, including
  assert.equal(review.computed.xy,1);
  assert.equal(review.computed.xx,null);
  assert.equal(review.computed.lower>1,true);
- assert.equal(receipt.challenge.status,'AWAITING_ADMISSIBLE_VERDICT');
- assert.equal(receipt.decision.supported,false);
+ assert.equal(receipt.challenge.status,'FORECAST_OVERTURNED');
+ assert.equal(receipt.decision.verdict,'REFUTE_SPECIFIC_CLAIM');
+ assert.equal(receipt.decision.supported,true);
+ assert.equal(receipt.decisionHistory.length,2);
+ assert.deepEqual(receipt.decisionHistory.map(x=>x.supported),[false,true]);
+ assert.equal(receipt.events.filter(x=>x.type==='LIVE_QUANTUM_RUN_COMPLETED').length,1);
+ assert.equal(receipt.events.filter(x=>x.type==='DECISION_REJECTED').length,1);
+ assert.equal(receipt.events.filter(x=>x.type==='DECISION_ACCEPTED').length,1);
+ assert.equal(receipt.execution.jobId,'7164b1f5-2044-499c-9413-cb614dc0db62');
  assert.equal(receipt.execution.backendName,'basic_simulator');
 });
