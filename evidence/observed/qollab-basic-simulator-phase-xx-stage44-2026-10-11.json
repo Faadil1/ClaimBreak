@@ -90,8 +90,22 @@
     "0011": 12,
     "0111": 10
   },
-  "decision": null,
-  "decisionHistory": [],
+  "decision": {
+    "attempt": 1,
+    "verdict": "NOT_ESTABLISHED",
+    "supported": true,
+    "explanation": "The submitted claim is not resolved by this evidence at the declared confidence threshold; other quantum properties may still be established.",
+    "atUtc": "2026-10-11T15:58:47.373Z"
+  },
+  "decisionHistory": [
+    {
+      "attempt": 1,
+      "verdict": "NOT_ESTABLISHED",
+      "supported": true,
+      "explanation": "The submitted claim is not resolved by this evidence at the declared confidence threshold; other quantum properties may still be established.",
+      "atUtc": "2026-10-11T15:58:47.373Z"
+    }
+  ],
   "customBlueprint": {
     "gates": "H0 CX01 S0",
     "claimType": "SEPARABLE",
@@ -100,10 +114,10 @@
   "challenge": {
     "forecast": "NOT_ESTABLISHED",
     "forecastSupported": true,
-    "attemptCount": 0,
-    "acceptedVerdict": null,
+    "attemptCount": 1,
+    "acceptedVerdict": "NOT_ESTABLISHED",
     "caseResolved": false,
-    "status": "AWAITING_ADMISSIBLE_VERDICT",
+    "status": "FORECAST_UPHELD",
     "resourceUse": {
       "quantumJobs": 1,
       "shotsPerSetting": 128,
@@ -151,6 +165,24 @@
     },
     {
       "utc": "2026-10-11T15:42:30.712Z",
+      "type": "EVIDENCE_RECORD_DISPLAYED",
+      "detail": {
+        "delivery": "manual_copy",
+        "newQuantumJob": false
+      }
+    },
+    {
+      "utc": "2026-10-11T15:58:47.379Z",
+      "type": "DECISION_ACCEPTED",
+      "detail": {
+        "attempt": 1,
+        "verdict": "NOT_ESTABLISHED",
+        "supported": true,
+        "noAdditionalQuantumJob": true
+      }
+    },
+    {
+      "utc": "2026-10-11T15:58:53.761Z",
       "type": "EVIDENCE_RECORD_DISPLAYED",
       "detail": {
         "delivery": "manual_copy",
