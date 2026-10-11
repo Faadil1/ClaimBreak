@@ -1,103 +1,133 @@
 # ClaimBreak — Quantum Evidence Court
 
-**Don't trust the claim. Design the test.**
+### Don't trust the claim. Design the test.
 
-A Qollab / IonQ Global Quantum Hackathon project built around a real investigation workflow: choose the experimental basis **before** running a quantum circuit, test a supplier's scientific claim with calibrated statistics, accept or reject a verdict, and export a complete trace of the evidence. An offline **Evidence Reviewer** provides a second, independently recalculated examination path for judges.
+**One quantum source. Two experiments. Two different conclusions.**
 
-> This effort is supported by Qollab & IonQ.
+[**Play ClaimBreak on Qollab**](https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co) · [**Open the independent Evidence Reviewer**](https://faadil1.github.io/ClaimBreak/) · [**Run the tests**](#run-locally) · [**Scientific details**](docs/SCIENTIFIC_METHOD.md)
 
-## Try the product
+**Qollab × IonQ Global Quantum Hackathon 2026** · **Quantum Unlocked** · **MIT licensed**
 
-**Live Quantum Court (Qollab):** https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co — **public v1.2 Stage 4.4** publication and signed-out browser execution observed. A separate Qollab **IonQ Forte 1 simulator (29q)** run and reviewer PASS have also been screen-captured, without physical QPU or cryptographic attestation.
+---
 
-**Independent reviewer (public GitHub Pages):** https://faadil1.github.io/ClaimBreak/ — independently observed accessible in Microsoft Edge, including an imported author-exported Qollab Stage 4.3 custom-source receipt with internal audit PASS. For offline use download root `index.html` and open it in a desktop browser. No Qiskit or account is required for offline review.
+## The problem
 
-**Why this matters:** A Bell-entangled pair and a separable classically correlated source can both produce `ZZ=1`. A pretty correlation chart can make a false claim look persuasive. ClaimBreak asks a better question: *what evidence supports this exact assertion, and what is missing?*
+Seeing a perfect correlation is not the same as proving entanglement. Two sources can agree in the Z basis even though one is entangled and the other is not. Collecting more measurements of the wrong observable does not repair a bad experiment.
 
-**Current Stage 4.4 public description and judge quick-start:** [Public submission copy](docs/PUBLIC_SUBMISSION_STAGE44.md). Official hackathon team submission is still not confirmed.
+Quantum education often reveals the answer first. **ClaimBreak makes the player design a test, risk a prediction, and defend a verdict with measurements they did not control.**
 
-## Stage 4.4 — Visual Circuit Studio and the Invisible Phase (published public v1.2, simulator runs observed)
+## The experience
 
-Stage 4.4 extends the open two-qubit laboratory with one-tap visual gate construction, H/Z/S/T/CX operations, phase-sensitive **ZZ±XY** protocols alongside ZZ±XX, and a geometric witness plot generated from actual backend counts. Choosing the correct observable now determines whether the same user-authored entangled state can be certified. The source compiler is still limited to 12 whitelisted operations, not arbitrary QASM.
+**Build → Challenge → Commit → Measure → Decide → Audit**
 
-**Observed two-run comparison:** source `H0 CX01 S0`, claimed separable, Qollab **BasicSimulator**, 128 shots **per setting**, separate jobs:
+1. **Create a source.** Build a two-qubit circuit visually with H, Z, S, T and CNOT gates (up to 12 instructions), or investigate one of the curated sources. Export or import a portable source blueprint.
+2. **Challenge a claim.** Assert that the source is entangled, separable, or has a specified minimum Bell-state fidelity.
+3. **Choose the experiment.** Select **Z only**, **ZZ ± XX**, or **ZZ ± XY**, plus a shot budget. Lock the predicted scientific outcome **before** measurement.
+4. **Execute the real circuit.** ClaimBreak creates the selected Qiskit circuit and sends **one job** to the Qollab-selected simulator. The returned bitstring counts, not a scripted answer, determine the observations.
+5. **Defend or revise your verdict.** Certify a witness, refute the *specific* submitted claim, or acknowledge insufficient evidence. Unsupported decisions are rejected; the player can correct the verdict **without a second job**. Both attempts remain in the session record.
+6. **Audit independently.** Copy the evidence JSON to the standalone, offline-capable [Evidence Reviewer](https://faadil1.github.io/ClaimBreak/). It recalculates correlations, the statistical margin, declared protocol, event order, and decision consistency directly from the counts.
 
-| Selected witness | Measured S | 99% one-sided lower S | Final justified verdict |
-|---|---:|---:|---|
-| ZZ + XY | 2.000 | 1.621 | `REFUTE_SPECIFIC_CLAIM` (entanglement established) |
-| ZZ + XX | 1.172 | 0.793 | `NOT_ESTABLISHED` (cannot conclude separability) |
+**Try it without a login:** the published Qollab **v1.2** project was observed running from a signed-out browser. The separate *Run on Qollab* button may request a Qollab account; the public project preview supports the observed visitor experience.
 
-The author-exported [XY](evidence/observed/qollab-basic-simulator-phase-xy-stage44-2026-10-11.json) and [XX](evidence/observed/qollab-basic-simulator-phase-xx-stage44-2026-10-11.json) receipts were independently recalculated by the reviewer and pass internal-coherence tests. They are **not** cryptographically attested and do not support pooling two 1% per-run error rates into one overall guarantee. Stage 4.4 has additionally been observed through a Qollab-selected **IonQ Forte 1 simulator** job, with reported `ZZ=0.96875`, `XY=1`, `S=1.96875`, and `lower=1.589393`, plus a public reviewer showing internal PASS. [Screenshot-grounded IonQ case details](docs/STAGE44_IONQ_SIMULATOR_OBSERVATION_2026-10-11.md). The **complete original IonQ JSON is not yet committed**; do not substitute the summary for a full receipt. Stage 4.4 has not been observed on physical QPU or with independently recruited outside users.
+## The signature challenge: The Invisible Phase
 
-See [Stage 4.4 public card and judge walkthrough](docs/PUBLIC_SUBMISSION_STAGE44.md).
+Prepare the source **\`H0 CX01 S0\`**. Ideally this makes
 
-## Stage 4.3 — Open Challenge Exchange (observed on Qollab BasicSimulator)
+\[
+|\psi\rangle = \frac{|00\rangle+i|11\rangle}{\sqrt{2}}.
+\]
 
-The [Open Challenge Exchange](docs/OPEN_CHALLENGE_EXPERIMENT.md) was the **historical Stage 4.3 precursor to the currently released Stage 4.4**, with one observed custom-source BasicSimulator run; it is distinct from the previously observed Stage 4.1 remote-IonQ simulator evidence. A creator authors a new two-qubit gate sequence from H/Z/CX and an exact entanglement/separability/fidelity claim; an examiner can import the portable JSON, design a basis/shot experiment, and send that actual circuit through Qollab. The reviewer independently recalculates the outcome and checks the declared source-lock history, without claiming source secrecy or backend authentication.
+A claimant says: **"This source is separable."** The investigator can select two valid but differently informative measurement protocols.
 
-**Observed:** user-authored `H1 CX10 Z1` / separability claim, minus witness, 128 shots per basis, one reported BasicSimulator job and independently recalculated Stage 4.3 reviewer PASS. [See the user-exported receipt](evidence/observed/qollab-basic-simulator-custom-case-d-2026-10-11.json). **Not demonstrated for Stage 4.3:** independently authored second-person exchange, broader statistical reliability, physical QPU attestation, or Stage 4.3 on remote IonQ Simulator. **The separate Stage 4.4 public publication is confirmed**, but official hackathon team submission remains unconfirmed.
+| Observed Qollab BasicSimulator run | ZZ + XY | ZZ + XX |
+|---|---:|---:|
+| ZZ correlation | +1.000 | +1.000 |
+| Second correlation | XY = +1.000 | XX = +0.172 |
+| Measured witness \(S\) | **2.000** | **1.172** |
+| One-sided lower bound, \(\alpha=0.01\) | **1.621** | **0.793** |
+| Defensible verdict | **Refute separability** | **Evidence insufficient** |
 
-## Stage 4.2 candidate — Quantum Cross-Examination
+**The source did not change; the question did.** The first predeclared witness exceeds the separable-state threshold after accounting for finite shots. The other does not establish entanglement, **but does not prove separability either**.
 
-ClaimBreak adds a **real pre-run decision challenge** to the quantum investigation: the examiner must publicly **commit a predicted admissible verdict** before using real simulator shots. The measured bitstrings can uphold or overturn that forecast. An incorrect forecast remains visible even after the examiner corrects the final verdict using the same quantum acquisition. This is a consequence-bearing **scientific learning interaction**, not a cosmetic score or a second quantum job.
+Both were real, **separate** Qollab BasicSimulator jobs with 128 shots **per measurement basis**, and their exported receipts passed the independent mathematical verifier:
 
-The standalone Evidence Reviewer now independently checks forecast chronology, resource accounting and forecast support from bitstring counts. It also tracks a four-mission Quantum Trials learning campaign across separately checked Stage 4.2 receipts, without pooling statistics or authenticating their backend origin. Source and verifier unit tests exercise the feature with fixtures, including a prior author-exported IonQ simulator record; **Stage 4.2 itself has NOT yet been observed running inside Qollab's live editor**, and prior Stage 4.1 observations must not be relabeled as Stage 4.2. Import/paste the updated `qollab/main.js` into Qollab before any live claim or official submission.
+- [ZZ + XY — measured refutation, including rejected → accepted recovery](evidence/observed/qollab-basic-simulator-phase-xy-stage44-2026-10-11.json)
+- [ZZ + XX — supported abstention, not a false claim of separability](evidence/observed/qollab-basic-simulator-phase-xx-stage44-2026-10-11.json)
 
-See [Stage 4.2 experience and truth boundary](docs/CROSS_EXAMINATION.md).
+### IonQ simulator compatibility
 
-## Two interconnected product workflows
+Stage 4.4 was also observed executing **\`H0 CX01 S0\` / ZZ + XY** in the published Qollab project with **IonQ Forte 1 simulator (29q)** selected. The reported independent job produced:
 
-| Live Court / Qollab runtime | Evidence Reviewer / standalone HTML |
+| Backend | Shots / basis | ZZ | XY | Witness \(S\) | Lower bound |
+|---|---:|---:|---:|---:|---:|
+| Qollab IonQ simulator, noise model | 128 | 0.96875 | 1.00000 | **1.96875** | **1.58939** |
+
+The exported result was pasted into the public reviewer and displayed **PASS — 0 internal integrity errors**. The full IonQ JSON export is **not currently committed**; the [screenshot-grounded observation report](docs/STAGE44_IONQ_SIMULATOR_OBSERVATION_2026-10-11.md) records the selected backend, job ID, reported counts and the precise evidence boundary.
+
+**This was a simulator, not an IonQ physical QPU.** Reviewer PASS means *internal mathematical consistency*, **not** cryptographic proof that a vendor ran the job. No quantum advantage, hardware reliability or external-user adoption is claimed.
+
+## Judge quick start — 2 minutes
+
+1. Open [ClaimBreak on Qollab](https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co) and select its public **v1.2** project. Choose **Qiskit Built-in Simulator (24q)** for the fastest guided run.
+2. Open **Open Challenge D**. Use the visual composer to make \`H0 CX01 S0\`, select **Source is separable**, **ZZ + XY**, and **128 shots per basis**.
+3. Forecast **Evidence insufficient** and select **Lock forecast & collect real quantum evidence**. Inspect the actual returned data; ideal values are an expectation, **not a guaranteed hard-coded outcome**.
+4. If the one-sided witness lower bound is above 1, select **Refute submitted claim**. If it is not, choose a verdict supported by the evidence. Use **Display evidence JSON** → **Select all JSON**.
+5. Open the [Evidence Reviewer](https://faadil1.github.io/ClaimBreak/), paste the exported JSON, and choose **Verify pasted record**. Inspect the verdict and its pass/warning distinction.
+
+To experience the *wrong-question* effect, run **a separate investigation** with the same source but **ZZ + XX**. These runs are not pooled into one statistical test.
+
+## Why it is different
+
+| Typical circuit demo | ClaimBreak |
 |---|---|
-| Case, measurement basis and shot count locked before the job | Import 1–25 independent JSON receipts |
-| Circuit is constructed specifically for selected case and settings | Derive ZZ, XX, witness and statistical bounds from bitstrings |
-| Real `backend.run` -> `job.result`, once per full Qollab Run | Check counts, declared settings, arithmetic and decision support |
-| Certify, refute or abstain with confidence guardrails | Inspect rejected→accepted history and event order |
-| Unsupported decisions are refused but recoverable in same run | Compare different backends side by side (no illegal run pooling) |
-| Case identity revealed only after accepted decision | Generate a local reviewer audit JSON (manual copy) |
+| Show a prepared state and its probabilities | Let a player author a new source and a falsifiable claim |
+| Choose measurements without commitment | Lock prediction and experimental settings before the backend job |
+| Show a correct/incorrect badge | Require an admissible scientific conclusion under a declared confidence bound |
+| Restart after a wrong answer | Reject unsupported verdicts but preserve the correction history using the same data |
+| Trust a screenshot of a result | Export raw counts and recalculate them in an independent browser reviewer |
 
-### Case design
+This is an **educational quantum investigation tool**, not a fraud detector, general-purpose tomography suite or cryptographically secure challenge exchange.
 
-- **A / Bell Phi+**: `ZZ=+1`, `XX=+1`, plus witness certifies entanglement.
-- **B / Separable imitation**: GHZ purification with unmeasured-by-analysis environment; `ZZ=+1`, `XX≈0`; use upper confidence bound to refute falsely claimed `F(Phi+) >= .90` without calling it fraud.
-- **C / Bell Phi-**: `ZZ=+1`, `XX=-1`; minus witness detects entanglement hidden from the plus witness.
-- **Z-only baseline**: inconclusive even with perfect agreement. The app must abstain, not declare separability.
+## Architecture
 
-### Source structure
+\`\`\`text
+Player / creator (Qollab JS + Qiskit)
+    │ circuit + exact claim + predeclared protocol + forecast
+    ▼
+Qollab-selected backend ── one circuit / one job
+    │ actual bitstring counts
+    ▼
+Witness + one-sided bound + admissible verdict
+    │ accepted/rejected decision history + JSON receipt
+    ▼
+Independent Evidence Reviewer (static HTML / browser, no backend access)
+    └── recalculates counts, bounds, claims and event consistency
+\`\`\`
 
-```text
-qollab/                Live JS/Qiskit project (Stage 4.4 visual creator and phase protocols)
-reviewer/index.html    Self-contained, offline reviewer — open locally
-reviewer/verifier.mjs  Independent verifier, tested under Node
-reviewer/app.js        Review desk interface
-reviewer/style.css     Responsive design language
-evidence/fixtures/     Explicitly synthetic examples for tests, NOT live data
-tests/                 Negative, tamper and mathematical regression tests
-docs/                  Scientific method, product depth, runbook, validation matrix, video, submission gates
-.github/workflows/     GitHub CI for syntax + verifier regressions
-LICENSE                MIT
-```
+The source grammar is intentionally restricted. For two-basis experiments the circuit includes **two independently prepared source registers**, one for each measurement setting; **128 circuit shots yield 128 observations per setting**, *not* 256 backend jobs or 256 shots per setting.
 
-## Verification, not overclaiming
+## Run locally
 
-A user-provided [IonQ Simulator Stage 4.1 JSON receipt](evidence/observed/ionq-simulator-case-b-2026-10-10.json) is included; see [provenance classification](docs/EVIDENCE_PROVENANCE.md). The user has supplied successful **Qiskit BasicSimulator** receipts for Stage 4.1 recovery, and a successful **IonQ Simulator** Stage 4.1 receipt for Case B with `F_upper≈0.829`, `supported=true`. These are simulator results, not live physical IonQ QPU runs of Stage 4.1. See [validation matrix](docs/VALIDATION_MATRIX.md). No repeated independent hardware reliability, unaffiliated user adoption, or final hackathon team submission is claimed. Stage 4.4 is published on the publicly accessible Qollab v1.2 card, and its source editor, simulator interaction, and verdict have been observed in a signed-out browser. The Stage 4.4 IonQ simulator record was separately pasted into the public GitHub Pages reviewer and displayed internal PASS.
+The quantum product itself **requires the Qollab JS/Qiskit environment**: paste \`qollab/index.html\`, \`qollab/main.css\`, and \`qollab/main.js\` into their respective panes, select a supported simulator, and use **Run Project**. The backend object is provided by Qollab; a standalone Node process is not a replacement.
 
-The offline reviewer cannot certify that user-controlled JSON was genuinely produced by IonQ. It detects inconsistent *contents*, not a well-forged document. Its included case B example is **synthetic** and visibly labeled as such.
+The review interface is a static app: visit [GitHub Pages](https://faadil1.github.io/ClaimBreak/) or open the root \`index.html\` locally. To run checks, use **Node.js 20+**, with no external npm dependencies:
 
-## Run and test
-
-See [RUNBOOK](docs/RUNBOOK.md). For static code regressions (Node 20+):
-
-```bash
+\`\`\`bash
 npm test
 npm run check:qollab
 npm run build:reviewer
-```
+\`\`\`
 
-No npm dependencies are required. Qollab injects the actual `backend` object; the live circuit is **not** runnable by opening `qollab/index.html` on a laptop.
+GitHub Actions repeats the syntax and verifier regression suite. [Reproduction and failure recovery](docs/RUNBOOK.md) · [Scientific method and statistical assumptions](docs/SCIENTIFIC_METHOD.md) · [Evidence provenance](docs/EVIDENCE_PROVENANCE.md).
 
-## Scientific method and limits
+## Scientific integrity
 
-[Statistical derivation and assumptions](docs/SCIENTIFIC_METHOD.md) · [Product depth](docs/PRODUCT_DEPTH.md) · [Gateway registry](docs/GATE_REGISTRY.md) · [Demo script](docs/DEMO_3_MIN.md) · [Submission checklist](docs/SUBMISSION_CHECKLIST.md) · [GitHub setup](docs/GITHUB_SETUP.md)
+For a **single prespecified** two-basis witness, the application uses \(S=\langle ZZ\rangle \pm \langle XX\rangle\), or \(S=\langle ZZ\rangle \pm \langle XY\rangle\), and the separable-state bound \(S\le 1\). The conservative one-sided Hoeffding margin is \(2\sqrt{\ln(1/\alpha)/N}\), with \(\alpha=0.01\); certification requires \(S_{\mathrm{observed}}-\mathrm{margin}>1\). This depends on trusted measurement bases, independent measurements, and the declared analysis. It is **not** a guarantee over repeated adaptive runs. More details and a separate claim-specific Bell fidelity bound are in the [scientific note](docs/SCIENTIFIC_METHOD.md).
 
-Built during the October 2026 Qollab / IonQ hackathon. MIT licensed.
+The offline reviewer's receipt is **not** a signature, a device certification or backend attestation. The repository distinguishes genuine *user-exported observed data*, *synthetic test fixtures*, and *analytical references*. Failures and inconclusive outcomes are scientific results, not defects to hide.
+
+---
+
+**Created for the Qollab × IonQ Global Quantum Hackathon, October 2026.** Open source under the [MIT License](LICENSE).
+
+**This effort is supported by Qollab & IonQ.**
