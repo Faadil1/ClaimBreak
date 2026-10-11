@@ -116,3 +116,25 @@ test('observed Stage 4.4 Qollab phase experiment recovers from rejection without
  assert.equal(receipt.execution.jobId,'7164b1f5-2044-499c-9413-cb614dc0db62');
  assert.equal(receipt.execution.backendName,'basic_simulator');
 });
+
+
+test('two actual Stage 4.4 Qollab source receipts reveal protocol sensitivity without pooling',()=>{
+ const load=name=>JSON.parse(readFileSync(new URL('../evidence/observed/'+name,import.meta.url),'utf8'));
+ const a=load('qollab-basic-simulator-phase-xy-stage44-2026-10-11.json');
+ const b=load('qollab-basic-simulator-phase-xx-stage44-2026-10-11.json');
+ const checkedA=verifyReceipt(a);
+ const checkedB=verifyReceipt(b);
+ assert.equal(checkedA.status,'PASS',checkedA.checks.filter(c=>c.severity==='error'&&!c.pass).map(c=>c.label).join(';'));
+ assert.equal(checkedB.status,'PASS',checkedB.checks.filter(c=>c.severity==='error'&&!c.pass).map(c=>c.label).join(';'));
+ assert.deepEqual(a.customBlueprint,b.customBlueprint);
+ assert.equal(a.execution.shots,b.execution.shots);
+ assert.notEqual(a.execution.jobId,b.execution.jobId,'Separate experiments must remain distinct');
+ assert.equal(checkedA.computed.certified,true);
+ assert.equal(checkedB.computed.certified,false);
+ assert.equal(a.configuration.protocol,'xyplus');
+ assert.equal(b.configuration.protocol,'plus');
+ assert.equal(checkedA.computed.lower>1,true);
+ assert.equal(checkedB.computed.lower<=1,true);
+ assert.equal(b.challenge.forecastSupported,true);
+ assert.equal(b.decision,null,'Do not invent a final verdict before user files it');
+});
