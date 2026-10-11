@@ -10,17 +10,17 @@ A Qollab / IonQ Global Quantum Hackathon project built around a real investigati
 
 **Live Quantum Court (Qollab):** https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co#code — author's project link; public publication remains to be confirmed.
 
-**Independent offline reviewer:** download root `index.html` (identical to `reviewer/index.html`) and double-click it in a desktop browser. No login, Qiskit installation, credentials, Node or network required to *review exported receipts*. GitHub Pages can host the reviewer from the repository root after it is enabled; deployment is not yet claimed.
+**Independent reviewer (public GitHub Pages):** https://faadil1.github.io/ClaimBreak/ — independently observed accessible in Microsoft Edge, including an imported author-exported Qollab Stage 4.3 custom-source receipt with internal audit PASS. For offline use download root `index.html` and open it in a desktop browser. No Qiskit or account is required for offline review.
 
 **Why this matters:** A Bell-entangled pair and a separable classically correlated source can both produce `ZZ=1`. A pretty correlation chart can make a false claim look persuasive. ClaimBreak asks a better question: *what evidence supports this exact assertion, and what is missing?*
 
 **Judge-ready project description and quick-start:** [Qollab submission copy](docs/QOLLAB_SUBMISSION_COPY.md) — draft for the organizer form; not proof of publication or submission.
 
-## Experimental Stage 4.3 — Open Challenge Exchange (NOT QOLLAB-VERIFIED)
+## Stage 4.3 — Open Challenge Exchange (observed on Qollab BasicSimulator)
 
-The [Open Challenge Exchange](docs/OPEN_CHALLENGE_EXPERIMENT.md) is a **separate unpromoted product bet**, not part of the already observed Stage 4.1 remote-IonQ simulator evidence. A creator authors a new two-qubit gate sequence from H/Z/CX and an exact entanglement/separability/fidelity claim; an examiner can import the portable JSON, design a basis/shot experiment, and send that actual circuit through Qollab. The reviewer independently recalculates the outcome and checks the declared source-lock history, without claiming source secrecy or backend authentication.
+The [Open Challenge Exchange](docs/OPEN_CHALLENGE_EXPERIMENT.md) is **the currently merged product direction**, with one observed custom-source BasicSimulator run; it is distinct from the previously observed Stage 4.1 remote-IonQ simulator evidence. A creator authors a new two-qubit gate sequence from H/Z/CX and an exact entanglement/separability/fidelity claim; an examiner can import the portable JSON, design a basis/shot experiment, and send that actual circuit through Qollab. The reviewer independently recalculates the outcome and checks the declared source-lock history, without claiming source secrecy or backend authentication.
 
-**Code and synthetic unit tests ≠ actual Qollab use or user adoption.** The official submission must not silently switch to Stage 4.3 before a real runtime test.
+**Observed:** user-authored `H1 CX10 Z1` / separability claim, minus witness, 128 shots per basis, one reported BasicSimulator job and independently recalculated Stage 4.3 reviewer PASS. [See the user-exported receipt](evidence/observed/qollab-basic-simulator-custom-case-d-2026-10-11.json). **Not demonstrated:** independently authored second-person exchange, broader statistical reliability, physical QPU attestation, Stage 4.3 on remote IonQ Simulator or official Qollab project publication/submission.
 
 ## Stage 4.2 candidate — Quantum Cross-Examination
 
@@ -51,7 +51,7 @@ See [Stage 4.2 experience and truth boundary](docs/CROSS_EXAMINATION.md).
 ### Source structure
 
 ```text
-qollab/                Live JS/Qiskit project (Stage 4.1 validated baseline)
+qollab/                Live JS/Qiskit project (Stage 4.3 custom-source release; 4.1 fallback evidenced)
 reviewer/index.html    Self-contained, offline reviewer — open locally
 reviewer/verifier.mjs  Independent verifier, tested under Node
 reviewer/app.js        Review desk interface
@@ -65,7 +65,7 @@ LICENSE                MIT
 
 ## Verification, not overclaiming
 
-A user-provided [IonQ Simulator Stage 4.1 JSON receipt](evidence/observed/ionq-simulator-case-b-2026-10-10.json) is included; see [provenance classification](docs/EVIDENCE_PROVENANCE.md). The user has supplied successful **Qiskit BasicSimulator** receipts for Stage 4.1 recovery, and a successful **IonQ Simulator** Stage 4.1 receipt for Case B with `F_upper≈0.829`, `supported=true`. These are simulator results, not live physical IonQ QPU runs of Stage 4.1. See [validation matrix](docs/VALIDATION_MATRIX.md). No evidence of repeated independent hardware reliability, public access, or final event submission is yet claimed.
+A user-provided [IonQ Simulator Stage 4.1 JSON receipt](evidence/observed/ionq-simulator-case-b-2026-10-10.json) is included; see [provenance classification](docs/EVIDENCE_PROVENANCE.md). The user has supplied successful **Qiskit BasicSimulator** receipts for Stage 4.1 recovery, and a successful **IonQ Simulator** Stage 4.1 receipt for Case B with `F_upper≈0.829`, `supported=true`. These are simulator results, not live physical IonQ QPU runs of Stage 4.1. See [validation matrix](docs/VALIDATION_MATRIX.md). No evidence of repeated independent hardware reliability, public Qollab access, or final event submission is claimed. The independent GitHub Pages reviewer has been publicly loaded and has successfully audited the author-exported Stage 4.3 custom-source receipt.
 
 The offline reviewer cannot certify that user-controlled JSON was genuinely produced by IonQ. It detects inconsistent *contents*, not a well-forged document. Its included case B example is **synthetic** and visibly labeled as such.
 
