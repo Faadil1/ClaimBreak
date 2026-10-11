@@ -145,3 +145,18 @@ test('independent reviewer accepts claim-specific abstention on high Bell fideli
   assert.equal(reviewed.status,'PASS',
     reviewed.checks.filter(x=>!x.pass&&x.severity==='error').map(x=>x.label).join('; '));
 });
+
+
+test('user-exported Stage 4.3 BasicSimulator custom challenge passes independent receipt audit',()=>{
+  // User-supplied Qollab export: internally verifiable, NOT cryptographically backend-attested.
+  const path=new URL('../evidence/observed/qollab-basic-simulator-custom-case-d-2026-10-11.json',import.meta.url);
+  const receipt=JSON.parse(readFileSync(path,'utf8'));
+  const review=verifyReceipt(receipt);
+  assert.equal(review.status,'PASS',
+    review.checks.filter(x=>!x.pass&&x.severity==='error').map(x=>x.label).join('; '));
+  assert.equal(review.computed.zz,1);
+  assert.equal(review.computed.xx,-1);
+  assert.equal(review.computed.certified,true);
+  assert.equal(receipt.challenge.status,'FORECAST_OVERTURNED');
+  assert.equal(receipt.customBlueprint.gates,'H1 CX10 Z1');
+});
