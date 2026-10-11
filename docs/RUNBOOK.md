@@ -1,35 +1,46 @@
-# ClaimBreak runbook
+# ClaimBreak — Runbook
 
-## Requirements
-- Qollab JS/Qiskit project and access to a supported backend.
-- JavaScript-capable desktop browser for the reviewer; Edge or Chrome suggested.
-- Node.js >=20 *only* for repo checks; no npm dependencies.
+## Play the published product
 
-## Live Quantum Court (Qollab)
-Paste qollab/index.html, qollab/main.css and qollab/main.js into their respective editor panes. Press Run Project on Qollab. The app initially waits for experiment configuration; choose A/B/C, z/plus/minus, shots per setting and press **Collect quantum evidence**. A dual-basis setting uses two source preparations **inside one circuit**, N shots per setting and one job. Read measured correlations, choose a verdict and export JSON by displaying and copying it into a UTF-8 .json file.
+Open [ClaimBreak on Qollab](https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co), public version **v1.2** (Stage 4.4). Select **Built-in Simulator (24q)** for the quickest experience, or **IonQ Forte 1 simulator (29q)** where available. Do not confuse the simulator with paid physical QPU hardware.
 
-Known working local paths include: A plus certification; B plus fidelity refutation; C minus entanglement witness; A z-only abstention; B unsupported verdict -> retry -> accepted claim refutation. Stage 4.1 remote IonQ simulator was checked for B plus at 128 shots. Do not assume all combinations or QPU devices are proven.
+### Signature open challenge
 
-## Offline reviewer
-Double-click root index.html in Edge, select an exported JSON file, paste one, or choose **Load synthetic example** (explicitly not real evidence). Verify findings and export the independent reviewer report. It does **not** call a quantum backend.
+1. Select **Open Challenge D** in the case selector.
+2. Build the circuit `H0 CX01 S0` using the visual gate buttons or the optional text editor.
+3. Set **Source is separable**, select **ZZ + XY**, and choose **128 shots per setting**.
+4. Precommit **Evidence insufficient**, then click **Lock forecast & collect real quantum evidence**.
+5. Wait for Qiskit to finish the single backend job. Read `ZZ`, `XY`, witness `S`, and its one-sided lower bound.
+6. If `lower > 1`, choose **Refute submitted claim**. A wrong verdict is refused and preserved, but can be corrected using the **same counts**. Do not certify if the bound fails.
+7. Click **Display evidence JSON**, **Select all JSON**, copy and save as a UTF-8 JSON file.
 
-## Reproducible checks
-With Node >=20: npm run check, npm run build:reviewer. A CI workflow repeats syntax and receipt regression tests on push.
+To demonstrate the effect of an incorrect measurement strategy, start an entirely separate Qollab Run using **the same source** but protocol **ZZ + XX**. Do not interpret missing certification as proven separability.
 
-## Failure and recovery
-If a Qollab experiment fails, retain the error and restart via Run Project on free BasicSimulator; never invent successful counts. An unsupported verdict may be corrected **within the same completed run**. If the JSON cannot download inside sandbox, use Display evidence JSON, Select all, Ctrl+C and save locally in Notepad as UTF-8.
+### Independent reviewer
 
-## Provider truth
-ionq_simulator is a simulator. Physical QPU jobs may have costs and queue delays. App-level deviceClass may remain UNVERIFIED_IN_APP.
+Open https://faadil1.github.io/ClaimBreak/ (or the repository root `index.html` offline). Click **Paste JSON Instead**, paste the receipt, then **Verify pasted record**. It recomputes correlations, confidence bounds, supported outcomes and chronology. **PASS means internal consistency only**; external backend authenticity is not verified.
 
+The reviewer also contains a historical four-mission guided campaign. A custom open-source case D receipt does **not** need to complete those four separate missions.
 
-## Candidate Stage 4.2 — user journey (not yet Qollab live-verified)
+## Reproduce from the source repository
 
-1. After updating **all three** Qollab editor panes, select A/B/C, Z-only/plus/minus and 64/128/256/512 shots per basis.
-2. **Before** clicking the live acquisition button, choose your **pre-run forecast**: certify, specifically refute, or admit insufficient evidence. Acquisition stays disabled without it.
-3. Click **Lock forecast & collect real quantum evidence**. The forecast lock and exact setup enter the local event log; **one and only one** Qiskit backend job is requested.
-4. Compare measured ZZ/XX visual signals with the selected witness bound; observe whether your own forecast survived the actual run. An incorrect pre-run forecast cannot be changed after acquiring data.
-5. File a verdict. Unsupported attempts are refused and recorded; choose a supported verdict using the SAME counts. The challenge outcome retains your original forecast and the resource cost.
-6. **Display evidence JSON** and import it into the standalone review desk; the Stage 4.2 verifier cross-checks forecast time/order, shot/protocol match, actual supported outcome, recovery history, and one-job resource statement.
+Qollab's JS/Qiskit editor uses `qollab/index.html`, `qollab/main.css` and `qollab/main.js`. Qollab injects its backend object. Simply running the JavaScript with local Node does not replace this backend.
 
-The code and synthetic/offline verification are a **CANDIDATE** until Qollab is updated and its real runner and visitor access tested. Z-only evidence cannot become conclusive merely by spending extra shots; do not describe selected source identity as fully unknown to a reader of the open-source code.
+With Node.js **20+**, no `npm install` dependency is required:
+
+```bash
+npm test
+npm run check:qollab
+npm run build:reviewer
+```
+
+The GitHub Actions CI runs syntax checks and the independent receipt regression suite. All observed samples under `evidence/observed/` are user-exported; synthetic test-only samples are under `evidence/fixtures/`.
+
+## Failure/recovery
+
+- If a backend request fails, preserve the error, recheck the selected simulator and restart Qollab Run; do **not** fabricate counts.
+- A rejected scientific verdict can be corrected **without a second job** if an experiment already returned valid counts.
+- If a JSON download is blocked inside Qollab, use **Display evidence JSON → Select all JSON → Ctrl+C**, then save in a text editor.
+- If the reviewer marks a file FAIL, check missing fields, bitstring width, counts, claimed basis, event order and decision support. Never modify raw counts merely to obtain PASS.
+
+The [scientific method](SCIENTIFIC_METHOD.md) and [provenance note](EVIDENCE_PROVENANCE.md) state the limits of these conclusions.
