@@ -83,11 +83,11 @@
     "0000": 29
   },
   "decision": {
-    "attempt": 1,
-    "verdict": "NOT_ESTABLISHED",
-    "supported": false,
-    "explanation": "The submitted claim already has a supported resolution from the evidence; inspect its bounds.",
-    "atUtc": "2026-10-11T15:23:19.618Z"
+    "attempt": 2,
+    "verdict": "REFUTE_SPECIFIC_CLAIM",
+    "supported": true,
+    "explanation": "A valid entanglement witness contradicts the claim that the source is separable.",
+    "atUtc": "2026-10-11T15:36:12.585Z"
   },
   "decisionHistory": [
     {
@@ -96,6 +96,13 @@
       "supported": false,
       "explanation": "The submitted claim already has a supported resolution from the evidence; inspect its bounds.",
       "atUtc": "2026-10-11T15:23:19.618Z"
+    },
+    {
+      "attempt": 2,
+      "verdict": "REFUTE_SPECIFIC_CLAIM",
+      "supported": true,
+      "explanation": "A valid entanglement witness contradicts the claim that the source is separable.",
+      "atUtc": "2026-10-11T15:36:12.585Z"
     }
   ],
   "customBlueprint": {
@@ -106,10 +113,10 @@
   "challenge": {
     "forecast": "NOT_ESTABLISHED",
     "forecastSupported": false,
-    "attemptCount": 1,
-    "acceptedVerdict": null,
-    "caseResolved": false,
-    "status": "AWAITING_ADMISSIBLE_VERDICT",
+    "attemptCount": 2,
+    "acceptedVerdict": "REFUTE_SPECIFIC_CLAIM",
+    "caseResolved": true,
+    "status": "FORECAST_OVERTURNED",
     "resourceUse": {
       "quantumJobs": 1,
       "shotsPerSetting": 128,
@@ -167,6 +174,24 @@
     },
     {
       "utc": "2026-10-11T15:23:21.778Z",
+      "type": "EVIDENCE_RECORD_DISPLAYED",
+      "detail": {
+        "delivery": "manual_copy",
+        "newQuantumJob": false
+      }
+    },
+    {
+      "utc": "2026-10-11T15:36:12.586Z",
+      "type": "DECISION_ACCEPTED",
+      "detail": {
+        "attempt": 2,
+        "verdict": "REFUTE_SPECIFIC_CLAIM",
+        "supported": true,
+        "noAdditionalQuantumJob": true
+      }
+    },
+    {
+      "utc": "2026-10-11T15:36:15.885Z",
       "type": "EVIDENCE_RECORD_DISPLAYED",
       "detail": {
         "delivery": "manual_copy",
