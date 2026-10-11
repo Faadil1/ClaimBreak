@@ -8,13 +8,28 @@ A Qollab / IonQ Global Quantum Hackathon project built around a real investigati
 
 ## Try the product
 
-**Live Quantum Court (Qollab):** https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co#code — author's project link; public publication remains to be confirmed.
+**Live Quantum Court (Qollab):** https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co — **v1.1 publication observed** in the author UI. The newer Stage 4.4 source is merged in GitHub, but updating the Qollab editor and pressing **Publish** again remains a separate action; public Stage 4.4 is not yet confirmed.
 
 **Independent reviewer (public GitHub Pages):** https://faadil1.github.io/ClaimBreak/ — independently observed accessible in Microsoft Edge, including an imported author-exported Qollab Stage 4.3 custom-source receipt with internal audit PASS. For offline use download root `index.html` and open it in a desktop browser. No Qiskit or account is required for offline review.
 
 **Why this matters:** A Bell-entangled pair and a separable classically correlated source can both produce `ZZ=1`. A pretty correlation chart can make a false claim look persuasive. ClaimBreak asks a better question: *what evidence supports this exact assertion, and what is missing?*
 
-**Judge-ready project description and quick-start:** [Qollab submission copy](docs/QOLLAB_SUBMISSION_COPY.md) — draft for the organizer form; not proof of publication or submission.
+**Current Stage 4.4 public description and judge quick-start:** [Public submission copy](docs/PUBLIC_SUBMISSION_STAGE44.md). Official hackathon team submission is still not confirmed.
+
+## Stage 4.4 — Visual Circuit Studio and the Invisible Phase (current merged code, Qollab publish pending)
+
+Stage 4.4 extends the open two-qubit laboratory with one-tap visual gate construction, H/Z/S/T/CX operations, phase-sensitive **ZZ±XY** protocols alongside ZZ±XX, and a geometric witness plot generated from actual backend counts. Choosing the correct observable now determines whether the same user-authored entangled state can be certified. The source compiler is still limited to 12 whitelisted operations, not arbitrary QASM.
+
+**Observed two-run comparison:** source `H0 CX01 S0`, claimed separable, Qollab **BasicSimulator**, 128 shots **per setting**, separate jobs:
+
+| Selected witness | Measured S | 99% one-sided lower S | Final justified verdict |
+|---|---:|---:|---|
+| ZZ + XY | 2.000 | 1.621 | `REFUTE_SPECIFIC_CLAIM` (entanglement established) |
+| ZZ + XX | 1.172 | 0.793 | `NOT_ESTABLISHED` (cannot conclude separability) |
+
+The author-exported [XY](evidence/observed/qollab-basic-simulator-phase-xy-stage44-2026-10-11.json) and [XX](evidence/observed/qollab-basic-simulator-phase-xx-stage44-2026-10-11.json) receipts were independently recalculated by the reviewer and pass internal-coherence tests. They are **not** cryptographically attested and do not support pooling two 1% per-run error rates into one overall guarantee. Stage 4.4 has not been observed on remote IonQ, physical QPU, or with independent outside users. The published Qollab project must still be updated from the newly merged code.
+
+See [Stage 4.4 public card and judge walkthrough](docs/PUBLIC_SUBMISSION_STAGE44.md).
 
 ## Stage 4.3 — Open Challenge Exchange (observed on Qollab BasicSimulator)
 
@@ -65,7 +80,7 @@ LICENSE                MIT
 
 ## Verification, not overclaiming
 
-A user-provided [IonQ Simulator Stage 4.1 JSON receipt](evidence/observed/ionq-simulator-case-b-2026-10-10.json) is included; see [provenance classification](docs/EVIDENCE_PROVENANCE.md). The user has supplied successful **Qiskit BasicSimulator** receipts for Stage 4.1 recovery, and a successful **IonQ Simulator** Stage 4.1 receipt for Case B with `F_upper≈0.829`, `supported=true`. These are simulator results, not live physical IonQ QPU runs of Stage 4.1. See [validation matrix](docs/VALIDATION_MATRIX.md). No evidence of repeated independent hardware reliability, public Qollab access, or final event submission is claimed. The independent GitHub Pages reviewer has been publicly loaded and has successfully audited the author-exported Stage 4.3 custom-source receipt.
+A user-provided [IonQ Simulator Stage 4.1 JSON receipt](evidence/observed/ionq-simulator-case-b-2026-10-10.json) is included; see [provenance classification](docs/EVIDENCE_PROVENANCE.md). The user has supplied successful **Qiskit BasicSimulator** receipts for Stage 4.1 recovery, and a successful **IonQ Simulator** Stage 4.1 receipt for Case B with `F_upper≈0.829`, `supported=true`. These are simulator results, not live physical IonQ QPU runs of Stage 4.1. See [validation matrix](docs/VALIDATION_MATRIX.md). No repeated independent hardware reliability, unaffiliated user adoption, or final hackathon team submission is claimed. The Qollab v1.1 project publication has been observed, but its Stage 4.4 update remains pending. GitHub Pages has been publicly loaded in Edge for previous receipts; Stage 4.4 reviewer import in the public browser remains to be verified.
 
 The offline reviewer cannot certify that user-controlled JSON was genuinely produced by IonQ. It detects inconsistent *contents*, not a well-forged document. Its included case B example is **synthetic** and visibly labeled as such.
 
