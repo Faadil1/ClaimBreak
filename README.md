@@ -120,6 +120,12 @@ npm run build:reviewer
 
 GitHub Actions repeats the syntax and verifier regression suite. [Reproduction and failure recovery](docs/RUNBOOK.md) · [Scientific method and statistical assumptions](docs/SCIENTIFIC_METHOD.md) · [Evidence provenance](docs/EVIDENCE_PROVENANCE.md).
 
+## Development provenance and attribution
+
+Built during the **October 9–11, 2026 hackathon window**, using Qollab's **JS/Qiskit starter project structure** (container element and injected backend) and the **Qiskit** framework. **AI-assisted development and documentation** were used; the team designed, integrated, iterated, and tested the ClaimBreak-specific interactive workflow, circuit composer, phase-sensitive protocols, confidence-bound decisions, recovery history, reviewer and regression tests. The standard Bell states, Pauli observables and Hoeffding inequality are established quantum/statistical methods, **not inventions claimed by this project**.
+
+The original contribution is the **integrated learning experience**: *user-authored claim → precommitted experiment → measured evidence → supported/refused/revised decision → independent review*. The repository includes both observed simulator receipts and explicitly synthetic fixtures, with their roles separated.
+
 ## Scientific integrity
 
 For a **single prespecified** two-basis witness, the application uses \(S=\langle ZZ\rangle \pm \langle XX\rangle\), or \(S=\langle ZZ\rangle \pm \langle XY\rangle\), and the separable-state bound \(S\le 1\). The conservative one-sided Hoeffding margin is \(2\sqrt{\ln(1/\alpha)/N}\), with \(\alpha=0.01\); certification requires \(S_{\mathrm{observed}}-\mathrm{margin}>1\). This depends on trusted measurement bases, independent measurements, and the declared analysis. It is **not** a guarantee over repeated adaptive runs. More details and a separate claim-specific Bell fidelity bound are in the [scientific note](docs/SCIENTIFIC_METHOD.md).
