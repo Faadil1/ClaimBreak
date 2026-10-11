@@ -45,7 +45,7 @@ const root = document.getElementById('container');
 if (!root) throw new Error('ClaimBreak requires the Qollab starter index.html element #container.');
 
 const state = {
-  phase: 'setup', selection: { caseId:'A', protocol:'plus', shots:128 },
+  phase: 'setup', selection: { caseId:'D', protocol:'xyplus', shots:128 },
   execution:null, evidence:null, decision:null, decisionHistory:[], events:[], error:null, selectedHypothesis:null, auditChecks:null,
   challenge:{forecast:null, locked:false},
   custom:{gates:'H0 CX01',claimType:'FIDELITY_MIN',threshold:0.90}
@@ -379,7 +379,7 @@ function setupView() {
   const c = CASES[state.selection.caseId];
   const protocol = PROTOCOLS[state.selection.protocol];
   const testIsTwo = state.selection.protocol !== 'z';
-  const openLab = state.selection.caseId==='D'?`<div class="callout"><div class="eyebrow">OPEN QUANTUM SOURCE LAB / EXPERIMENTAL</div>
+  const openLab = state.selection.caseId==='D'?`<div class="callout"><div class="eyebrow">QUANTUM SOURCE LAB / PUBLIC CIRCUIT BUILDER</div>
     <h2>Author a quantum experiment, not just a verdict</h2>
     <p>Your H/Z/CX gate sequence compiles into the real backend circuit. Your authored claim can be tested, rejected or left unresolved.</p>
     ${sourceWorkbench(state.custom.gates)}
