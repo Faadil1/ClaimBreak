@@ -1,7 +1,7 @@
-# ClaimBreak Open Challenge Exchange — experimental product bet
+# ClaimBreak Open Challenge Exchange — Stage 4.3 observed custom-source capability
 
-**Status: BUILD-CODE VERIFIED OFFLINE, QOLLAB RUNTIME UNKNOWN, NOT SUBMITTED.**
-This is a deliberately risky expansion of the product's actual capabilities, not another proof artifact or rule. Stage 4.2 remains in `main` until human-directed integration and independent use justify promotion.
+**Status: MERGED TO MAIN; ONE CUSTOM-SOURCE QOLLAB BASIC_SIMULATOR RUN OBSERVED; REVIEWER PASS; PUBLIC QOLLAB PROJECT AND OFFICIAL SUBMISSION NOT CONFIRMED.**
+This is a material expansion of product capability, not simply a new proof artifact. [Observed author-exported receipt](../evidence/observed/qollab-basic-simulator-custom-case-d-2026-10-11.json): `H1 CX10 Z1`, separability claim, ZZ−XX, 128 shots per setting, `REFUTE_SPECIFIC_CLAIM` supported, `FORECAST_OVERTURNED`. It passed the independent verifier. The receipt remains user-controlled and does not authenticate the simulator cryptographically. Stage 4.1 IonQ simulator evidence is a separate earlier version.
 
 ## Why the old scope was shallow
 
@@ -20,7 +20,7 @@ With `H0 CX01`, the source is Bell Φ+ and a plus witness can support entangleme
 - **No general code execution or QASM:** only a small whitelisted gate compiler. This is an open-ended combinatorial source builder *within that grammar*, not support for arbitrary quantum hardware gates.
 - **No secure hidden source:** creator/exported JSON fully reveals the gate sequence; anyone can inspect it. Do not claim a cryptographically blind adversarial duel or anonymous multi-user service.
 - **No signed attestation:** a reviewer checks arithmetic, declared plan, event order and internal consistency. User-controlled files can still be fabricated. Vendor authenticity is unknown.
-- **No live Qollab Stage 4.3 evidence:** CI tests use a fake circuit recorder and synthetic 4-qubit counts; they are **not** a real simulator or QPU job.
+- **Limited live Stage 4.3 evidence:** one user-exported Qollab BasicSimulator custom-source Case D run is observed and independently audited. CI also includes synthetic fixtures; those fixtures are not extra quantum jobs. No physical QPU or Stage 4.3 remote IonQ simulator claim.
 - **No persistence/adoption:** users exchange JSON manually; no account storage, multiplayer synchronization, marketplace, payment or network certification.
 - **Scientific scope:** one predeclared witness/fidelity test per backend run under trusted axes and independent samples; no guarantee for adaptively searched claims across multiple jobs.
 
@@ -30,10 +30,10 @@ With `H0 CX01`, the source is Bell Φ+ and a plus witness can support entangleme
 2. A separate examiner imports that JSON, chooses **minus** witness and 128 shots, and submits one actual Qollab simulator job. Check the **actual** returned `ZZ`, `XX`, statistical lower bound, source lock and accepted/rejected conclusion. Do not force a predetermined result.
 3. The examiner exports the Stage 4.3 JSON. Independently import it into the updated standalone reviewer. Check the mathematics, claim support, event order, gate blueprint consistency and any rejected-then-corrected judgment.
 4. Run a contrasting experiment with **plus** witness, showing how an apparently similar source may not be established by the wrong protocol. Separate experiments are separate evidence; never pool their per-run error guarantees as one claim.
-5. **If no authentic Qollab runtime or second-person flow occurs:** leave this as an experiment and submit only a reliable live-tested version that meets actual deadline and event requirements.
+5. **Current reality:** a first creator-operated Qollab custom-source session and reviewer check succeeded; a separate human creator/examiner handoff remains unobserved. Submit the version actually tested in the event UI before the deadline; do not claim external adoption.
 
 ## What would prove meaningful additional product depth?
 
 An external person (not the builder) creates or imports a **previously unknown valid challenge**, chooses an experiment without following a fixed demo script, obtains a real backend result, reaches a legitimate supported/refused/unknown outcome, and can take the record to an independent reviewer. That is the first substantive user-value delta beyond Stage 4.2. A green CI or additional seeded screenshots alone would not prove it.
 
-The official Qollab × IonQ competition deadline is described as Oct 11 2026 19:00 ET. Publishing/submission require the Qollab team UI and evidence; this experimental PR does not authorize automatically replacing a working published product.
+The Qollab × IonQ competition deadline is described as Oct 11 2026 19:00 ET. Publishing the Qollab project and submitting from the team page are separate user actions; neither is confirmed merely by merging this code.
