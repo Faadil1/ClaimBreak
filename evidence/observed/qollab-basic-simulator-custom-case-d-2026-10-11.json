@@ -1,0 +1,176 @@
+{
+  "product": "ClaimBreak Quantum Evidence Court",
+  "version": "stage4.3",
+  "configuration": {
+    "caseId": "D",
+    "protocol": "minus",
+    "shots": 128,
+    "predeclaredBeforeQuantumRun": true,
+    "protocolLabel": "Two bases — witness ZZ − XX"
+  },
+  "execution": {
+    "backendName": "basic_simulator",
+    "acquiredAtUtc": "2026-10-11T13:50:45.082Z",
+    "jobId": "a546e544-b300-41ab-b77c-789a4519e3b7",
+    "shots": 128,
+    "qubits": 4,
+    "settings": [
+      "Z",
+      "X"
+    ],
+    "rawCounts": {
+      "1000": 33,
+      "1011": 26,
+      "0100": 32,
+      "0111": 37
+    },
+    "mode": "LIVE_QISKIT_BACKEND_RESULT",
+    "deviceClass": "UNVERIFIED_IN_APP",
+    "quantumJobs": 1
+  },
+  "protocol": {
+    "alphaPerRun": 0.01,
+    "margin": "2*sqrt(ln(1/alpha)/N) for two independent ±1 setting averages",
+    "scope": "single predeclared test in this run; no familywise claim across repeated runs",
+    "assumptions": "trusted bases, independent representative measurements, no arbitrary postselection"
+  },
+  "evidence": {
+    "zz": 1,
+    "xx": -1,
+    "S": 2,
+    "margin": 0.3793567823462866,
+    "lower": 1.6206432176537133,
+    "fidelityUpper": null,
+    "certified": true,
+    "shotsReturned": 128,
+    "protocol": "minus"
+  },
+  "auditChecks": {
+    "status": "PASS",
+    "checks": [
+      {
+        "name": "Measured shots equal predeclared shots",
+        "pass": true
+      },
+      {
+        "name": "Bitstrings have expected width",
+        "pass": true
+      },
+      {
+        "name": "One circuit requested",
+        "pass": true
+      },
+      {
+        "name": "All measured correlations are within [-1,+1]",
+        "pass": true
+      },
+      {
+        "name": "Z-only does not certify",
+        "pass": true
+      },
+      {
+        "name": "Witness and threshold agree",
+        "pass": true
+      }
+    ]
+  },
+  "theoreticalReference": null,
+  "rawCounts": {
+    "1000": 33,
+    "1011": 26,
+    "0100": 32,
+    "0111": 37
+  },
+  "decision": {
+    "attempt": 1,
+    "verdict": "REFUTE_SPECIFIC_CLAIM",
+    "supported": true,
+    "explanation": "A valid entanglement witness contradicts the claim that the source is separable.",
+    "atUtc": "2026-10-11T13:51:01.023Z"
+  },
+  "decisionHistory": [
+    {
+      "attempt": 1,
+      "verdict": "REFUTE_SPECIFIC_CLAIM",
+      "supported": true,
+      "explanation": "A valid entanglement witness contradicts the claim that the source is separable.",
+      "atUtc": "2026-10-11T13:51:01.023Z"
+    }
+  ],
+  "customBlueprint": {
+    "gates": "H1 CX10 Z1",
+    "claimType": "SEPARABLE",
+    "threshold": 0.8
+  },
+  "challenge": {
+    "forecast": "NOT_ESTABLISHED",
+    "forecastSupported": false,
+    "attemptCount": 1,
+    "acceptedVerdict": "REFUTE_SPECIFIC_CLAIM",
+    "caseResolved": true,
+    "status": "FORECAST_OVERTURNED",
+    "resourceUse": {
+      "quantumJobs": 1,
+      "shotsPerSetting": 128,
+      "measuredSettings": 2
+    },
+    "scoringBasis": "Forecast locked before measurement. Outcome depends on measured evidence. No extra quantum calls."
+  },
+  "events": [
+    {
+      "utc": "2026-10-11T13:50:44.907Z",
+      "type": "CUSTOM_CHALLENGE_BLUEPRINT_LOCKED",
+      "detail": {
+        "gates": "H1 CX10 Z1",
+        "claimType": "SEPARABLE",
+        "threshold": 0.8
+      }
+    },
+    {
+      "utc": "2026-10-11T13:50:44.907Z",
+      "type": "CHALLENGE_FORECAST_LOCKED",
+      "detail": {
+        "forecast": "NOT_ESTABLISHED",
+        "shots": 128,
+        "protocol": "minus"
+      }
+    },
+    {
+      "utc": "2026-10-11T13:50:44.907Z",
+      "type": "EXPERIMENT_PREDECLARED",
+      "detail": {
+        "caseId": "D",
+        "protocol": "minus",
+        "shots": 128
+      }
+    },
+    {
+      "utc": "2026-10-11T13:50:45.082Z",
+      "type": "LIVE_QUANTUM_RUN_COMPLETED",
+      "detail": {
+        "backend": "basic_simulator",
+        "shots": 128,
+        "qubits": 4,
+        "quantumJobs": 1
+      }
+    },
+    {
+      "utc": "2026-10-11T13:51:01.023Z",
+      "type": "DECISION_ACCEPTED",
+      "detail": {
+        "attempt": 1,
+        "verdict": "REFUTE_SPECIFIC_CLAIM",
+        "supported": true,
+        "noAdditionalQuantumJob": true
+      }
+    },
+    {
+      "utc": "2026-10-11T13:51:07.977Z",
+      "type": "EVIDENCE_RECORD_DISPLAYED",
+      "detail": {
+        "delivery": "manual_copy",
+        "newQuantumJob": false
+      }
+    }
+  ]
+}

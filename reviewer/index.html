@@ -21,9 +21,9 @@
 </style></head>
 <body><div class="shell"><header class="masthead"><div class="masttop"><a class="brand" href="#top" aria-label="ClaimBreak Evidence Reviewer home"><span class="brand-seal">CB<span class="period">.</span></span><span>CLAIMBREAK <small>QUANTUM EVIDENCE COURT</small></span></a><span class="mast-chip">INDEPENDENT REVIEW DESK / v1</span></div><div class="mastmain"><div><span class="overline">EVIDENCE GOVERNANCE / QUANTUM SYSTEMS</span><h1>Every claim<br><em>needs a record.</em></h1><p>Inspect exported quantum evidence. Recompute the math. Challenge the verdict. Compare separate runs without pretending they are one experiment.</p></div><div class="hero-aside"><span class="hero-rule">01 / LAB TO COURT</span><div class="equation">EVIDENCE<br><span>≠</span> ASSERTION</div><p>The reviewer is offline. No backend calls. No unverified hardware claim.</p></div></div></header><main id="top"><div class="notice" role="note"><span class="notice-icon">!</span><p><strong>Truth boundary.</strong> This tool independently checks numerical consistency of the supplied JSON. It cannot authenticate that a backend ran, that data was not forged, or that hardware was used. A PASS means internally consistent, <em>not</em> cryptographically attested.</p></div><section class="workspace" aria-labelledby="intake-heading"><div class="panel intake"><div class="panel-head"><span class="section-number">01</span><span class="overline">IMPORT / ACQUIRE</span></div><h2 id="intake-heading">Open an evidence record.</h2><p class="muted">Load one or more JSON exports from ClaimBreak Live Court, or paste a record. Files stay in this browser tab.</p><label class="drop" for="file-input" id="drop-zone" tabindex="0"><span class="drop-ico">↥</span><strong>Drop JSON receipts here</strong><small>or choose files from your computer</small><input type="file" id="file-input" accept=".json,application/json" multiple></label><div class="split"><button id="show-paste" class="button secondary" type="button">Paste JSON instead</button><button id="load-example" class="button tertiary" type="button">Load synthetic example</button></div><div id="paste-panel" class="paste-panel hidden"><label for="json-paste">JSON receipt</label><textarea id="json-paste" placeholder="Paste the complete exported JSON object..."></textarea><button class="button" id="inspect-paste" type="button">Verify pasted record →</button></div><div id="feedback" class="feedback" role="status" aria-live="polite"></div></div><aside class="panel policy"><div class="panel-head"><span class="section-number">02</span><span class="overline">VERDICT / REVIEW LOGIC</span></div><h2>The evidence decides.</h2><div class="process"><div><span>01</span><p>Rebuild ZZ, XX and the selected witness from measured bitstrings.</p></div><div><span>02</span><p>Recompute the Hoeffding margin and claim-specific fidelity bound.</p></div><div><span>03</span><p>Cross-check each decision and chronological attempt history.</p></div></div><div class="mini-disclaimer">Built for Qollab/IonQ hackathon review. Theoretical simulations and physical observations must remain separately identified.</div></aside></section><section class="campaign-panel" aria-labelledby="campaign-heading">
   <div class="section-heading"><div><span class="overline">PLAYER JOURNEY / QUANTUM TRIALS</span>
-    <h2 id="campaign-heading">Four experiments. Four ways to be wrong.</h2></div>
+    <h2 id="campaign-heading">Four guided trials. Open challenges are reviewed separately.</h2></div>
     <span class="campaign-count" id="campaign-count">0 / 4 complete</span></div>
-  <p class="muted">Each mission must be completed by an independently consistent Stage 4.2 receipt from a separate Qollab experiment. No pooled confidence claims, no backend authentication, and no made-up game runs.</p>
+  <p class="muted">This optional 0/4 counter tracks four guided Stage 4.2 missions only. A valid Stage 4.3 custom-source receipt appears in the review docket and can PASS independently without increasing this counter. No pooled confidence claims or backend authentication.</p>
   <div id="campaign-tiles" class="campaign-tiles" aria-live="polite"></div>
 </section><section class="record-collection" aria-labelledby="register-heading"><div class="section-heading"><div><span class="overline">EVIDENCE REGISTRY / SESSION ONLY</span><h2 id="register-heading">Review docket</h2></div><div class="right-actions"><span class="total-count" id="count-summary">0 receipts</span><button id="export-review" class="button secondary" disabled type="button">Export review report</button><button id="clear-all" class="button tertiary" disabled type="button">Clear</button></div></div><div id="empty"><div class="empty-graphic" aria-hidden="true">◇ <span>⊞</span> ◇</div><strong>No records under review</strong><p>Import exported Qollab JSON to begin. The review desk works without a quantum backend.</p></div><div id="docket" class="hidden"><div class="table-scroll"><table><thead><tr><th>Record / Source</th><th>Backend declared</th><th>Witness / lower bound</th><th>Decision</th><th>Audit</th></tr></thead><tbody id="receipt-rows"></tbody></table></div><p class="small-note">Do not combine confidence guarantees across independently selected runs without a multiple-testing protocol.</p></div></section><section class="findings hidden" id="detail" aria-labelledby="detail-title"></section><section id="review-export" class="panel hidden"><div class="section-heading"><h2>Review report / manual copy</h2><button id="close-review" class="button tertiary">Close</button></div><p class="muted">Select all, copy, and save as <code>claimbreak-review-report.json</code>. Review findings are calculated locally and are not backend attestations.</p><textarea id="review-json" readonly aria-label="Evidence review report"></textarea><button class="button" id="select-review" type="button">Select all report JSON</button></section></main><footer><span>CLAIMBREAK / EVIDENCE BEFORE ASSERTION.</span><span>This effort is supported by Qollab &amp; IonQ.</span><span>MIT LICENSE · OFFLINE REVIEW</span></footer></div><script>/**
  * ClaimBreak independent receipt verifier (offline, no Qiskit, no external requests).
@@ -35,7 +35,8 @@ const EPS = 1e-9;
 const PAIRS = {
   A: { z:[0,1], x:[2,3], single:2, dual:4 },
   B: { z:[1,2], x:[4,5], single:3, dual:6 },
-  C: { z:[0,1], x:[2,3], single:2, dual:4 }
+  C: { z:[0,1], x:[2,3], single:2, dual:4 },
+  D: { z:[0,1], x:[2,3], single:2, dual:4 }
 };
 const roundMatch = (a,b) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a-b) <= EPS;
 
@@ -55,6 +56,17 @@ function verifyReceipt(input) {
   const protocol=record.protocol??{};
   const id=cfg.caseId;
   const kind=cfg.protocol;
+  const custom=record.customBlueprint;
+  let customValid=false;
+  if(id==='D'){
+    const tokens=typeof custom?.gates==='string'?custom.gates.trim().split(/ +/):[];
+    customValid=record.version==='stage4.3' && tokens.length>=1 && tokens.length<=12 &&
+      tokens.every(x=>['H0','H1','Z0','Z1','CX01','CX10'].includes(x)) &&
+      ['ENTANGLED','SEPARABLE','FIDELITY_MIN'].includes(custom?.claimType) &&
+      typeof custom?.threshold==='number' && custom.threshold>=.60 && custom.threshold<=.95;
+    add('Custom source blueprint uses known circuit instructions and claim',customValid);
+    if(!customValid)return {status:'FAIL',checks,computed:null,record};
+  }
   const pair=PAIRS[id];
   const dual=kind==='plus'||kind==='minus';
   add('Known case and predeclared protocol', !!pair && (dual||kind==='z'));
@@ -100,11 +112,25 @@ function verifyReceipt(input) {
   add('No extra completed quantum job recorded',eventTypes.filter(x=>x==='LIVE_QUANTUM_RUN_COMPLETED').length===1);
   const pre=record.events?.find(x=>x.type==='EXPERIMENT_PREDECLARED')?.utc;
   const complete=record.events?.find(x=>x.type==='LIVE_QUANTUM_RUN_COMPLETED')?.utc;
+  if(id==='D') {
+    const sourceLocks=(record.events??[]).filter(x=>x.type==='CUSTOM_CHALLENGE_BLUEPRINT_LOCKED');
+    const sourceLock=sourceLocks[0];
+    const startTime=Date.parse(sourceLock?.utc??'');
+    const finishTime=Date.parse(complete??'');
+    add('Custom source was locked before the quantum result',sourceLocks.length===1 &&
+      Number.isFinite(startTime)&&Number.isFinite(finishTime)&&startTime<=finishTime&&
+      eventTypes.indexOf('CUSTOM_CHALLENGE_BLUEPRINT_LOCKED')<eventTypes.indexOf('LIVE_QUANTUM_RUN_COMPLETED') &&
+      JSON.stringify(sourceLock?.detail)===JSON.stringify(custom));
+  }
   if(pre&&complete) add('Protocol declared before returned results',!Number.isNaN(Date.parse(pre))&&!Number.isNaN(Date.parse(complete))&&Date.parse(pre)<=Date.parse(complete));
   if(record.decision){
     const verdict=record.decision.verdict;
-    const refutable=id==='B'?(fidelityUpper!==null&&fidelityUpper<0.9):id==='C'?certified:false;
-    const expected=verdict==='CERTIFIED_ENTANGLEMENT'?certified:verdict==='REFUTE_SPECIFIC_CLAIM'?refutable:verdict==='NOT_ESTABLISHED'?!certified&&!refutable:null;
+    const refutable=id==='B'?(fidelityUpper!==null&&fidelityUpper<0.9):
+      id==='C'?certified:id==='D'?(custom.claimType==='SEPARABLE'?certified:
+      custom.claimType==='FIDELITY_MIN'&&fidelityUpper!==null&&fidelityUpper<custom.threshold):false;
+    const unresolved=(id==='B'||(id==='D'&&custom.claimType==='FIDELITY_MIN'))
+      ? !refutable : !certified&&!refutable;
+    const expected=verdict==='CERTIFIED_ENTANGLEMENT'?certified:verdict==='REFUTE_SPECIFIC_CLAIM'?refutable:verdict==='NOT_ESTABLISHED'?unresolved:null;
     add('Verdict is a defined ClaimBreak decision',expected!==null);
     add('Decision support agrees with independently recalculated evidence',expected===record.decision.supported);
     if(Array.isArray(record.decisionHistory)) {
@@ -118,7 +144,7 @@ function verifyReceipt(input) {
   } else warn('No committed or rejected decision in this receipt');
   // Stage 4.2: re-evaluate the player's precommitted strategy from raw counts,
   // rather than trusting the copied on-screen challenge assessment.
-  if(record.version==='stage4.2'){
+  if(record.version==='stage4.2'||record.version==='stage4.3'){
     const ch=record.challenge??{};
     const lockEvents=(record.events??[]).filter(x=>x.type==='CHALLENGE_FORECAST_LOCKED');
     const lock=lockEvents[0];
@@ -132,10 +158,14 @@ function verifyReceipt(input) {
       eventTypes.indexOf('CHALLENGE_FORECAST_LOCKED')<eventTypes.indexOf('LIVE_QUANTUM_RUN_COMPLETED'));
     add('Precommit matches actual shot/basis configuration',
       lock?.detail?.shots===cfg.shots && lock?.detail?.protocol===cfg.protocol);
-    const challengeRefutable=id==='B'?(fidelityUpper!==null&&fidelityUpper<.90):id==='C'?certified:false;
+    const challengeRefutable=id==='B'?(fidelityUpper!==null&&fidelityUpper<.90):
+      id==='C'?certified:id==='D'?(custom.claimType==='SEPARABLE'?certified:
+      custom.claimType==='FIDELITY_MIN'&&fidelityUpper!==null&&fidelityUpper<custom.threshold):false;
+    const unresolvedForecast=(id==='B'||(id==='D'&&custom.claimType==='FIDELITY_MIN'))
+      ? !challengeRefutable : !certified&&!challengeRefutable;
     const supported=ch.forecast==='CERTIFIED_ENTANGLEMENT'?certified:
       ch.forecast==='REFUTE_SPECIFIC_CLAIM'?challengeRefutable:
-      ch.forecast==='NOT_ESTABLISHED'?!certified&&!challengeRefutable:false;
+      ch.forecast==='NOT_ESTABLISHED'?unresolvedForecast:false;
     add('Challenge forecast independently graded against quantum counts',ch.forecastSupported===supported);
     const attempts=Array.isArray(record.decisionHistory)?record.decisionHistory:[];
     const accepted=attempts.find(x=>x.supported)??null;
@@ -144,7 +174,9 @@ function verifyReceipt(input) {
     add('Challenge outcome matches accepted verdict and recovery history',
       ch.status===expectedStatus && ch.attemptCount===attempts.length &&
       ch.acceptedVerdict===(accepted?.verdict??null) &&
-      ch.caseResolved===Boolean(accepted&&accepted.verdict!=='NOT_ESTABLISHED'));
+      ch.caseResolved===Boolean(accepted&&accepted.verdict!=='NOT_ESTABLISHED' &&
+        (!(id==='B'||(id==='D'&&custom.claimType==='FIDELITY_MIN')) ||
+          accepted.verdict==='REFUTE_SPECIFIC_CLAIM')));
     add('Game-resource statement is tied to the same actual quantum job',
       ch.resourceUse?.quantumJobs===1&&
       ch.resourceUse?.shotsPerSetting===cfg.shots&&

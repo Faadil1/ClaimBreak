@@ -1,4 +1,4 @@
-// CLAIMBREAK STAGE 4.2 — Cross-Examination: commit a forecast, spend quantum shots, and face the result.
+// CLAIMBREAK STAGE 4.3 EXPERIMENTAL — Open Challenge Exchange: author a real circuit and test an independently chosen claim.
 // Hardening pass: honest provenance, decision outcome events, analytical reliability audit, export and recovery.
 // Intended for Qollab's JS/Qiskit project shape. Keep starter index.html (#container).
 // The Qollab runtime injects `backend`. Never hardcode a QPU or credentials.
@@ -9,7 +9,7 @@
 import { QuantumCircuit } from 'qiskit';
 
 const ALPHA = 0.01; // predeclared ONE selected one-sided test per execution
-const VERSION = 'stage4.2';
+const VERSION = 'stage4.3';
 const CASES = {
   A: {
     label: 'Source A', docket: 'FILE / 001', claim: 'The submitted source is entangled.',
@@ -26,6 +26,12 @@ const CASES = {
     label: 'Source C', docket: 'FILE / 003', claim: 'The submitted two-qubit state is separable.',
     briefing: 'An ordinary witness reportedly failed. Can a different prespecified witness disprove separability?',
     truth: 'Entangled Bell state |Φ−⟩', explanation: 'Bell |Φ−⟩ has ZZ = +1 and XX = −1. The ZZ − XX witness can establish entanglement.'
+  },
+  D: {
+    label: 'Open-source challenge', docket: 'FILE / OPEN', claim: 'A user-authored claim about a real custom quantum circuit.',
+    briefing: 'Create or import a challenge blueprint. Your choices compile into a new backend circuit, not a replay of source A/B/C.',
+    truth: 'User-defined circuit — gate operations shown in exported blueprint',
+    explanation: 'The source is custom. This app checks witness and fidelity bounds from measured counts, not the blueprint’s physical authenticity.'
   }
 };
 const PROTOCOLS = {
@@ -39,7 +45,8 @@ if (!root) throw new Error('ClaimBreak requires the Qollab starter index.html el
 const state = {
   phase: 'setup', selection: { caseId:'A', protocol:'plus', shots:128 },
   execution:null, evidence:null, decision:null, decisionHistory:[], events:[], error:null, selectedHypothesis:null, auditChecks:null,
-  challenge:{forecast:null, locked:false}
+  challenge:{forecast:null, locked:false},
+  custom:{gates:'H0 CX01',claimType:'FIDELITY_MIN',threshold:0.90}
 };
 let startResolve = null;
 const isoNow = () => new Date().toISOString();
@@ -56,9 +63,47 @@ function backendLabel() {
   return 'Qollab-selected backend (device class unverified)';
 }
 
+// OPEN CHALLENGE SOURCE — whitelisted small circuits avoid arbitrary code execution.
+// This is intentionally not a general QASM interpreter; the author creates a
+// previously unseen source and an independently checkable precise claim.
+const SOURCE_GATES=new Set(['H0','H1','Z0','Z1','CX01','CX10']);
+const CLAIM_TYPES=new Set(['ENTANGLED','SEPARABLE','FIDELITY_MIN']);
+function validateCustomBlueprint(raw) {
+  if(!raw || typeof raw!=='object'||Array.isArray(raw)) throw new Error('Challenge must be a JSON object.');
+  const text=String(raw.gates??'').trim().toUpperCase();
+  if(text.length>110) throw new Error('Too many circuit gates.');
+  const tokens=text.split(/ +/).filter(Boolean);
+  if(tokens.length<1||tokens.length>12||tokens.some(g=>!SOURCE_GATES.has(g)))
+    throw new Error('Only H0, H1, Z0, Z1, CX01 and CX10 are allowed (1–12 gates).');
+  if(!CLAIM_TYPES.has(raw.claimType)) throw new Error('Invalid claim type.');
+  const threshold=Number(raw.threshold);
+  if(!Number.isFinite(threshold)||threshold<0.60||threshold>0.95)
+    throw new Error('Fidelity threshold must be 0.60 to 0.95.');
+  return {gates:tokens.join(' '),claimType:raw.claimType,threshold};
+}
+function activeClaim() {
+  if(state.selection.caseId!=='D') return CASES[state.selection.caseId].claim;
+  const b=state.custom;
+  return b.claimType==='ENTANGLED'?'The user-authored quantum source is entangled.':
+    b.claimType==='SEPARABLE'?'The user-authored quantum source is separable.':
+    'The source has fidelity with |Φ+⟩ of at least '+Math.round(100*b.threshold)+'%.';
+}
+function applyCustomGates(circuit,offset,blueprint) {
+  const b=validateCustomBlueprint(blueprint);
+  for(const gate of b.gates.split(' ')){
+    if(gate==='H0')circuit.h(offset);
+    else if(gate==='H1')circuit.h(offset+1);
+    else if(gate==='Z0')circuit.z(offset);
+    else if(gate==='Z1')circuit.z(offset+1);
+    else if(gate==='CX01')circuit.cx(offset,offset+1);
+    else if(gate==='CX10')circuit.cx(offset+1,offset);
+  }
+}
+// END OPEN CHALLENGE SOURCE
+
 // The classical mixture MUST be a mixed two-qubit state within EACH quantum job,
 // not a single random |00> or |11> choice reused across all shots.
-function buildCircuit(caseId, protocol) {
+function buildCircuit(caseId, protocol,customBlueprint=state.custom) {
   const pairQubits = caseId === 'B' ? 3 : 2; // B uses a purification ancilla.
   const settings = protocol === 'z' ? ['Z'] : ['Z','X'];
   const nQubits = pairQubits * settings.length;
@@ -73,8 +118,8 @@ function buildCircuit(caseId, protocol) {
       circuit.h(env); circuit.cx(env, qA); circuit.cx(env, qB);
     } else {
       qA = offset; qB = offset + 1;
-      circuit.h(qA); circuit.cx(qA, qB);
-      if (caseId === 'C') circuit.z(qA);
+      if(caseId==='D')applyCustomGates(circuit,offset,customBlueprint);
+      else {circuit.h(qA); circuit.cx(qA,qB); if(caseId==='C')circuit.z(qA);}
     }
     if (settings[k] === 'X') { circuit.h(qA); circuit.h(qB); }
     groups.push({ setting: settings[k], qA, qB });
@@ -160,29 +205,42 @@ function theoreticalFalseCertificationRate(shots,threshold) {
 }
 
 // PURE CHALLENGE RULES — independently unit tested offline.
-function supportsVerdict(verdict,e,caseId,auditPassed) {
+function supportsVerdict(verdict,e,caseId,auditPassed,customBlueprint=null) {
   if(!auditPassed || !e) return false;
   if (verdict === 'CERTIFIED_ENTANGLEMENT') return e.certified === true;
   if (verdict === 'REFUTE_SPECIFIC_CLAIM') {
     if (caseId === 'B') return e.fidelityUpper !== null && e.fidelityUpper < 0.90;
     if (caseId === 'C') return e.certified === true;
+    if (caseId === 'D') {
+      const b=validateCustomBlueprint(customBlueprint);
+      return b.claimType==='SEPARABLE'?e.certified===true:
+        b.claimType==='FIDELITY_MIN'&&e.fidelityUpper!==null&&e.fidelityUpper<b.threshold;
+    }
     return false;
   }
   if (verdict === 'NOT_ESTABLISHED') {
     const refutable = caseId === 'B' ? e.fidelityUpper !== null && e.fidelityUpper < 0.90
-      : caseId === 'C' ? e.certified === true : false;
+      : caseId === 'C' ? e.certified === true
+      : caseId === 'D'?supportsVerdict('REFUTE_SPECIFIC_CLAIM',e,caseId,auditPassed,customBlueprint):false;
+    // A fidelity threshold is a different claim from entanglement itself.
+    // No lower fidelity-confidence bound is computed by this limited protocol,
+    // so absent a supported refutation, the minimum-fidelity claim is unresolved.
+    if (caseId === 'B' || (caseId === 'D' &&
+        validateCustomBlueprint(customBlueprint).claimType === 'FIDELITY_MIN')) return !refutable;
     return !e.certified && !refutable;
   }
   return false;
 }
-function challengeAssessment(forecast,e,caseId,auditPassed,history,shots,protocol) {
+function challengeAssessment(forecast,e,caseId,auditPassed,history,shots,protocol,customBlueprint=null) {
   const valid=['CERTIFIED_ENTANGLEMENT','REFUTE_SPECIFIC_CLAIM','NOT_ESTABLISHED'].includes(forecast);
-  const precommitSupported=valid && supportsVerdict(forecast,e,caseId,auditPassed);
+  const precommitSupported=valid && supportsVerdict(forecast,e,caseId,auditPassed,customBlueprint);
   const accepted=history.find(d=>d.supported) || null;
   return {
     forecast, forecastSupported:precommitSupported, attemptCount:history.length,
     acceptedVerdict:accepted?.verdict ?? null,
-    caseResolved:Boolean(accepted && accepted.verdict!=='NOT_ESTABLISHED'),
+    caseResolved:Boolean(accepted && accepted.verdict!=='NOT_ESTABLISHED' &&
+      (!(caseId==='B'||(caseId==='D'&&customBlueprint?.claimType==='FIDELITY_MIN')) ||
+        accepted.verdict==='REFUTE_SPECIFIC_CLAIM')),
     status: !accepted ? 'AWAITING_ADMISSIBLE_VERDICT' :
       precommitSupported ? 'FORECAST_UPHELD' : 'FORECAST_OVERTURNED',
     resourceUse:{quantumJobs:1,shotsPerSetting:shots,measuredSettings:protocol==='z'?1:2},
@@ -190,7 +248,8 @@ function challengeAssessment(forecast,e,caseId,auditPassed,history,shots,protoco
   };
 }
 function allowedDecision(verdict) {
-  return supportsVerdict(verdict,state.evidence,state.selection.caseId,state.auditChecks?.status==='PASS');
+  return supportsVerdict(verdict,state.evidence,state.selection.caseId,state.auditChecks?.status==='PASS',
+    state.selection.caseId==='D'?state.custom:null);
 }
 // END PURE CHALLENGE RULES
 
@@ -226,7 +285,7 @@ const css = `
 @media(max-width:760px){#cb3 .grid{grid-template-columns:1fr}#cb3 .page{padding:14px}#cb3 .card{padding:16px}#cb3 .metrics{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){#cb3 *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 `;
-root.innerHTML = `<style>${css}</style><main id="cb3"><header class="header"><div class="eyebrow">CLAIMBREAK / QUANTUM CROSS-EXAMINATION / STAGE 4.2</div><h1>Put your scientific certainty<br>on trial.</h1><p class="muted">Commit your prediction. Choose what to measure. Let actual quantum evidence prove you wrong — or uphold your case.</p><span class="tag" id="cb3-tag">AWAITING EXPERIMENT</span></header><div class="page" id="cb3-content" aria-live="polite"></div></main>`;
+root.innerHTML = `<style>${css}</style><main id="cb3"><header class="header"><div class="eyebrow">CLAIMBREAK / OPEN CHALLENGE EXCHANGE / STAGE 4.3 EXPERIMENTAL</div><h1>Put your scientific certainty<br>on trial.</h1><p class="muted">Commit your prediction. Choose what to measure. Let actual quantum evidence prove you wrong — or uphold your case.</p><span class="tag" id="cb3-tag">AWAITING EXPERIMENT</span></header><div class="page" id="cb3-content" aria-live="polite"></div></main>`;
 const content = root.querySelector('#cb3-content');
 const tag = root.querySelector('#cb3-tag');
 function layout(left, right='') { content.innerHTML = `<div class="grid"><section>${left}</section><aside>${right}</aside></div>`; }
@@ -234,11 +293,32 @@ function setupView() {
   const c = CASES[state.selection.caseId];
   const protocol = PROTOCOLS[state.selection.protocol];
   const testIsTwo = state.selection.protocol !== 'z';
+  const openLab = state.selection.caseId==='D'?`<div class="callout"><div class="eyebrow">OPEN QUANTUM SOURCE LAB / EXPERIMENTAL</div>
+    <h2>Author a quantum experiment, not just a verdict</h2>
+    <p>Your H/Z/CX gate sequence compiles into the real backend circuit. Your authored claim can be tested, rejected or left unresolved.</p>
+    <label for="cb3-gates">Two-qubit source blueprint</label>
+    <input id="cb3-gates" data-field="gates" value="${escapeHTML(state.custom.gates)}" maxlength="110"
+      style="width:100%;padding:12px;font:14px ui-monospace,Consolas,monospace;background:#fff;color:#17271d">
+    <p class="fine">Permitted gates: H0 H1 Z0 Z1 CX01 CX10. Sequence max 12 gates; initial state |00⟩.</p>
+    <label for="cb3-claim">Supplier claim</label><select id="cb3-claim" data-field="claimType">
+      ${[['ENTANGLED','Source is entangled'],['SEPARABLE','Source is separable'],
+        ['FIDELITY_MIN','Fidelity to Bell Phi+ is at least the selected percentage']].map(([v,label])=>
+        `<option value="${v}" ${state.custom.claimType===v?'selected':''}>${label}</option>`).join('')}</select>
+    <label for="cb3-threshold">Claimed minimum fidelity</label><select id="cb3-threshold" data-field="threshold"
+      ${state.custom.claimType!=='FIDELITY_MIN'?'disabled':''}>
+      ${[0.60,0.70,0.80,0.90,0.95].map(n=>`<option value="${n}" ${state.custom.threshold===n?'selected':''}>${Math.round(100*n)}%</option>`).join('')}</select>
+    <div class="actions"><button type="button" class="outline" data-action="share-blueprint">Export challenge blueprint</button>
+       <button type="button" class="outline" data-action="import-blueprint">Import pasted blueprint</button></div>
+    <textarea id="cb3-blueprint" aria-label="Exchange quantum challenge blueprint JSON"
+      placeholder="Export and share, or paste an authored source here"></textarea>
+    <p class="fine">Portable JSON is not signed or secret. Sources are transparent to those who inspect the challenge code; no verified opponent secrecy is claimed.</p>
+  </div>`:'';
   layout(`<div class="card"><div class="eyebrow">Stage 01 / experiment design</div><h2>Your protocol is the strategy</h2><p class="muted">Your choices determine the quantum circuit BEFORE it is sent to the selected backend. No other case is measured in this run.</p>
     <label for="cb3-case">Evidence case</label><select id="cb3-case" data-field="caseId">${Object.entries(CASES).map(([id,x])=>`<option value="${id}" ${id===state.selection.caseId?'selected':''}>${x.docket} — ${x.label}</option>`).join('')}</select>
     <label for="cb3-protocol">Predeclared measurement protocol</label><select id="cb3-protocol" data-field="protocol">${Object.entries(PROTOCOLS).map(([id,x])=>`<option value="${id}" ${id===state.selection.protocol?'selected':''}>${escapeHTML(x.label)}</option>`).join('')}</select>
     <label for="cb3-shots">Shots per setting</label><select id="cb3-shots" data-field="shots">${[64,128,256,512].map(n=>`<option value="${n}" ${n===state.selection.shots?'selected':''}>${n} ${n===128?'— recommended':''}</option>`).join('')}</select>
     <div class="callout"><strong>One actual quantum job.</strong> ${escapeHTML(protocol.summary)} ${testIsTwo?'The circuit contains two independent source preparations, one per basis.':'Only one preparation is executed.'} This is a real shot budget, not an inspection credit. With two settings you collect ${state.selection.shots} samples PER setting in one quantum job.</div>
+    ${openLab}
     <div class="mission"><div class="eyebrow">Quantum cross-examination · your stake</div><h2>Commit your prediction before the quantum job</h2>
       <p>What will this protocol actually justify? You cannot edit this forecast after measurement. If the evidence contradicts you, the court will show it.</p>
       <label for="cb3-forecast">Your pre-run forecast</label>
@@ -251,7 +331,7 @@ function setupView() {
     </div>
     <div class="actions"><button type="button" data-action="start" ${!state.challenge.forecast?'disabled':''}>Lock forecast &amp; collect real quantum evidence →</button></div>
     <p class="fine">The Qollab console may say “Running...” while waiting for this click. Select Qiskit Built-in Simulator (24q) in Qollab first. Do not use paid IonQ hardware for this test.</p></div>`,
-    `<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / sealed source</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(c.claim)}</p><p>${escapeHTML(c.briefing)}</p><div class="callout"><strong>Unknown until decision.</strong> The underlying preparation is concealed before the experiment.</div></div><div class="card"><div class="eyebrow">Protocol integrity</div><p>99% one-sided confidence bound for ONE predeclared witness or fidelity test. Repeated searching across new runs is not covered by this error guarantee.</p><p class="fine">Trusted measurement assumptions apply. No claim of device-independent verification or proven vendor fraud.</p></div>`);
+    `<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / sealed source</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(activeClaim())}</p><p>${escapeHTML(c.briefing)}</p><div class="callout"><strong>${state.selection.caseId==='D'?'Editable circuit, public source':'Source identity hidden in this UI'}.</strong> ${state.selection.caseId==='D'?'The creator shares a transparent gate sequence; the investigator chooses how to measure it. The circuit is never cryptographically secret.':'The underlying preparation is concealed before the experiment.'}</div></div><div class="card"><div class="eyebrow">Protocol integrity</div><p>99% one-sided confidence bound for ONE predeclared witness or fidelity test. Repeated searching across new runs is not covered by this error guarantee.</p><p class="fine">Trusted measurement assumptions apply. No claim of device-independent verification or proven vendor fraud.</p></div>`);
 }
 function runningView() {
   const c=CASES[state.selection.caseId];
@@ -259,7 +339,7 @@ function runningView() {
 }
 function evidenceView() {
   const c=CASES[state.selection.caseId]; const e=state.evidence;
-  const claimRefuted = state.selection.caseId==='B' && e.fidelityUpper!==null && e.fidelityUpper<0.90;
+  const claimRefuted = allowedDecision('REFUTE_SPECIFIC_CLAIM');
   const theory = state.decision && state.selection.caseId==='B' && state.selection.protocol==='plus'
     ? {naive:theoreticalFalseCertificationRate(e.shotsReturned,0),
        calibrated:theoreticalFalseCertificationRate(e.shotsReturned,e.margin)} : null;
@@ -272,7 +352,8 @@ function evidenceView() {
     ['NOT_ESTABLISHED','Evidence insufficient']
   ];
   const challenge = challengeAssessment(state.challenge.forecast,e,state.selection.caseId,
-    state.auditChecks.status==='PASS',state.decisionHistory,state.selection.shots,state.selection.protocol);
+    state.auditChecks.status==='PASS',state.decisionHistory,state.selection.shots,state.selection.protocol,
+    state.selection.caseId==='D'?state.custom:null);
   const forecastLabels={CERTIFIED_ENTANGLEMENT:'Certify entanglement',
     REFUTE_SPECIFIC_CLAIM:'Refute submitted claim',NOT_ESTABLISHED:'Evidence insufficient'};
   const parityRail=(name,value)=>`<div class="signal-cell"><div class="eyebrow">${name} / MEASURED</div>
@@ -291,8 +372,12 @@ function evidenceView() {
       ${challenge.caseResolved?'The precise claim can be resolved from this measured evidence.':'The scientifically defensible outcome is abstention.'}
       ${state.decisionHistory.length>1?'Your incorrect decision attempts remain permanently in this session receipt.':''}</p>`:''}
   </div>`;
-  layout(`<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / evidence acquired</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(c.claim)}</p><p class="fine">Actual measurements from this execution only. No other source has been measured in this Run.</p>${missionBlock}<div class="signal-rail">${parityRail('Z-BASIS / ZZ',e.zz)}${parityRail('X-BASIS / XX',e.xx)}</div><div class="metrics"><div class="metric"><small>ZZ observed</small><strong>${fmt(e.zz)}</strong></div><div class="metric"><small>XX observed</small><strong>${e.xx===null?'NOT MEASURED':fmt(e.xx)}</strong></div><div class="metric"><small>Selected witness S</small><strong>${fmt(e.S)}</strong></div><div class="metric"><small>One-sided margin (α = 0.01)</small><strong>${fmt(e.margin)}</strong></div></div><div class="callout">${scienceLine}</div>
-  ${state.selection.caseId==='B' && e.fidelityUpper!==null?`<div class="callout"><strong>Claim-specific test:</strong> conservative 99% upper bound for fidelity F(Φ+) is <b>${fmt(e.fidelityUpper)}</b>. ${claimRefuted?'This is below the vendor threshold 0.90.':'This does not yet refute the vendor threshold 0.90.'}</div>`:''}
+  layout(`<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / evidence acquired</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(activeClaim())}</p><p class="fine">Actual measurements from this execution only. No other source has been measured in this Run.</p>${missionBlock}<div class="signal-rail">${parityRail('Z-BASIS / ZZ',e.zz)}${parityRail('X-BASIS / XX',e.xx)}</div><div class="metrics"><div class="metric"><small>ZZ observed</small><strong>${fmt(e.zz)}</strong></div><div class="metric"><small>XX observed</small><strong>${e.xx===null?'NOT MEASURED':fmt(e.xx)}</strong></div><div class="metric"><small>Selected witness S</small><strong>${fmt(e.S)}</strong></div><div class="metric"><small>One-sided margin (α = 0.01)</small><strong>${fmt(e.margin)}</strong></div></div><div class="callout">${scienceLine}</div>
+  ${(state.selection.caseId==='B'||(state.selection.caseId==='D'&&state.custom.claimType==='FIDELITY_MIN'))&&e.fidelityUpper!==null?
+    `<div class="callout"><strong>Claim-specific test:</strong> one-sided 99% upper bound for Bell Φ+ fidelity:
+    <b>${fmt(e.fidelityUpper)}</b>. Declared threshold:
+    <b>${fmt(state.selection.caseId==='D'?state.custom.threshold:0.90)}</b>.
+    ${claimRefuted?'The upper confidence bound is below the declared threshold.':'This evidence does not refute the declared threshold.'}</div>`:''}
   ${theory ? `<details class="card"><summary>Post-verdict reliability lens — mathematical reference (not a new quantum run)</summary><p class="fine">For the ideal separable-mixture model at the witness boundary, an uncalibrated rule S &gt; 1 miscertifies with probability ${pct(theory.naive)}. The fixed, predeclared ${fmt(100*(1-ALPHA))}% one-sided calibrated rule has exact false-certification probability ${pct(theory.calibrated)} at the same sample size. These are exact binomial reference calculations for this ideal model, not measured device error rates, and they do not establish performance under correlated noise.</p></details>` : ''}
   <div class="hint" role="status"><strong>Receipt checks:</strong> ${state.auditChecks.status === 'PASS' ? 'All internal checks passed' : 'Internal inconsistency detected — do not certify'} (${state.auditChecks.checks.filter(x=>x.pass).length}/${state.auditChecks.checks.length}). These checks do not validate QPU calibration.</div>
   <div class="decision"><div class="eyebrow">Decision / commit</div><h2>File your evidence-based verdict</h2><p class="fine">CERTIFIED requires a witness lower bound above 1. REFUTE must contradict the exact submitted claim. An absent violation does not demonstrate separability.</p><div class="actions">${buttons.map(([v,l])=>`<button type="button" class="${v==='NOT_ESTABLISHED'?'outline':''}" data-action="decision" data-value="${v}" ${state.decision?.supported?'disabled':''}>${l}</button>`).join('')}</div>
@@ -314,9 +399,11 @@ function decisionExplanation(v,ok) {
     ? 'The prespecified witness lower bound exceeds the separable-state limit under the stated assumptions.'
     : 'The selected observations do not establish entanglement with the prescribed error bound.';
   if (v==='REFUTE_SPECIFIC_CLAIM') return ok
-    ? (state.selection.caseId==='B'?'The upper confidence bound contradicts the claimed Φ+ fidelity ≥ 0.90.':'A valid witness establishes entanglement, contradicting the source’s separability claim.')
-    : 'The acquired observations do not refute the specific submitted claim. Missing proof is not proof of fraud, separability, or falsity.';
-  return ok?'This experimental record is insufficient to establish certification or refute the specific claim.':'A stronger conclusion is supported by the collected evidence; inspect the displayed bound.';
+    ? (state.selection.caseId==='B'||(state.selection.caseId==='D'&&state.custom.claimType==='FIDELITY_MIN')
+      ? 'The upper confidence bound contradicts the claimed Bell Φ+ fidelity threshold.'
+      : 'A valid entanglement witness contradicts the claim that the source is separable.')
+    : 'These measured observations cannot refute the specific supplied claim. Insufficient proof is not proof of fraud, separability or falsity.';
+  return ok?'The submitted claim is not resolved by this evidence at the declared confidence threshold; other quantum properties may still be established.':'The submitted claim already has a supported resolution from the evidence; inspect its bounds.';
 }
 function exportRecord() {
   if (!state.execution || !state.evidence) return;
@@ -335,13 +422,15 @@ function exportRecord() {
       calibratedFalseCertificationProbability:theoreticalFalseCertificationRate(state.evidence.shotsReturned,state.evidence.margin)
     } : null,
     rawCounts:state.execution.rawCounts,decision:state.decision,decisionHistory:state.decisionHistory,
+    customBlueprint:state.selection.caseId==='D'?validateCustomBlueprint(state.custom):null,
     challenge:challengeAssessment(state.challenge.forecast,state.evidence,state.selection.caseId,
-      state.auditChecks.status==='PASS',state.decisionHistory,state.selection.shots,state.selection.protocol),
+      state.auditChecks.status==='PASS',state.decisionHistory,state.selection.shots,state.selection.protocol,
+      state.selection.caseId==='D'?state.custom:null),
     events:state.events
   };
   let panel=root.querySelector('#cb3-json-panel');
   if(!panel){ panel=document.createElement('section'); panel.id='cb3-json-panel';panel.className='card';content.prepend(panel); }
-  panel.innerHTML=`<div class="eyebrow">Evidence / manual export</div><h2>Copy the exact JSON</h2><p class="fine">This browser may block Blob downloads. Select all JSON, press Ctrl+C, paste into Windows Notepad, then Save as <strong>claimbreak-stage4-2-evidence.json</strong> (All files / UTF-8).</p><div class="actions"><button type="button" data-action="select-json">Select all JSON</button><button type="button" class="outline" data-action="close-json">Close</button></div><textarea id="cb3-json-text" aria-label="Exported evidence JSON" readonly spellcheck="false"></textarea><p class="fine" id="cb3-copy-status">No further quantum job is needed.</p>`;
+  panel.innerHTML=`<div class="eyebrow">Evidence / manual export</div><h2>Copy the exact JSON</h2><p class="fine">This browser may block Blob downloads. Select all JSON, press Ctrl+C, paste into Windows Notepad, then Save as <strong>claimbreak-stage4-3-open-challenge-evidence.json</strong> (All files / UTF-8).</p><div class="actions"><button type="button" data-action="select-json">Select all JSON</button><button type="button" class="outline" data-action="close-json">Close</button></div><textarea id="cb3-json-text" aria-label="Exported evidence JSON" readonly spellcheck="false"></textarea><p class="fine" id="cb3-copy-status">No further quantum job is needed.</p>`;
   panel.querySelector('textarea').value=JSON.stringify(out,null,2);
   panel.scrollIntoView({block:'start',behavior:'auto'});
 }
@@ -354,16 +443,45 @@ root.addEventListener('change',ev=>{
   if(field==='shots'&&[64,128,256,512].includes(Number(ev.target.value)))state.selection.shots=Number(ev.target.value);
   if(field==='forecast'&&['CERTIFIED_ENTANGLEMENT','REFUTE_SPECIFIC_CLAIM','NOT_ESTABLISHED',''].includes(ev.target.value))
     state.challenge.forecast=ev.target.value || null;
+  if(state.selection.caseId==='D'&&field==='gates')state.custom.gates=ev.target.value;
+  if(state.selection.caseId==='D'&&field==='claimType'&&CLAIM_TYPES.has(ev.target.value))
+    state.custom.claimType=ev.target.value;
+  if(state.selection.caseId==='D'&&field==='threshold'&&[.60,.70,.80,.90,.95].includes(Number(ev.target.value)))
+    state.custom.threshold=Number(ev.target.value);
   if(field)render();
 });
 root.addEventListener('click',ev=>{
   const b=ev.target.closest?.('button[data-action]'); if(!b)return;
   const act=b.dataset.action;
   if(act==='start'&&state.phase==='setup'&&startResolve&&state.challenge.forecast){
+    if(state.selection.caseId==='D'){
+      try {state.custom=validateCustomBlueprint(state.custom);}
+      catch(err){window.alert?.(String(err.message));return;}
+      record('CUSTOM_CHALLENGE_BLUEPRINT_LOCKED',{...state.custom});
+    }
     state.challenge.locked=true;
     record('CHALLENGE_FORECAST_LOCKED',{forecast:state.challenge.forecast,shots:state.selection.shots,protocol:state.selection.protocol});
     record('EXPERIMENT_PREDECLARED',{...state.selection});
     const go=startResolve;startResolve=null;go();
+  }
+  if(act==='share-blueprint'&&state.phase==='setup'&&state.selection.caseId==='D'){
+    try {
+      const blueprint=validateCustomBlueprint(state.custom);
+      const out={format:'ClaimBreak-open-challenge-1',blueprint};
+      const box=root.querySelector('#cb3-blueprint');
+      if(box){box.value=JSON.stringify(out,null,2);box.focus();box.select();}
+    }catch(err){window.alert?.(String(err.message));}
+  }
+  if(act==='import-blueprint'&&state.phase==='setup'&&state.selection.caseId==='D'){
+    try {
+      const raw=root.querySelector('#cb3-blueprint')?.value??'';
+      if(raw.length>2048)throw new Error('Challenge JSON exceeds 2 KB.');
+      const obj=JSON.parse(raw);
+      if(obj?.format!=='ClaimBreak-open-challenge-1')
+        throw new Error('Unsupported challenge format.');
+      state.custom=validateCustomBlueprint(obj.blueprint);
+      render();
+    }catch(err){window.alert?.(String(err.message));}
   }
   if(act==='decision'&&state.phase==='evidence'&&!state.decision?.supported){
     const verdict=b.dataset.value;
@@ -387,7 +505,8 @@ async function runOneSelectedExperiment() {
   state.phase='running';render();
   try{
     const selection={...state.selection}; // immutable after the protocol is locked
-    const bundle=buildCircuit(selection.caseId,selection.protocol);
+    const blueprint=selection.caseId==='D'?validateCustomBlueprint(state.custom):null;
+    const bundle=buildCircuit(selection.caseId,selection.protocol,blueprint);
     const bName=backendLabel();
     const job=await backend.run(bundle.circuit,{shots:selection.shots}); // ONE quantum job
     let jobId=null;
