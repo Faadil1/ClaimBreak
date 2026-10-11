@@ -31,7 +31,7 @@ Quantum education often reveals the answer first. **ClaimBreak makes the player 
 
 ## The signature challenge: The Invisible Phase
 
-Prepare the source **\`H0 CX01 S0\`**. Ideally this makes
+Prepare the source **`H0 CX01 S0`**. Ideally this makes
 
 \[
 |\psi\rangle = \frac{|00\rangle+i|11\rangle}{\sqrt{2}}.
@@ -56,7 +56,7 @@ Both were real, **separate** Qollab BasicSimulator jobs with 128 shots **per mea
 
 ### IonQ simulator compatibility
 
-Stage 4.4 was also observed executing **\`H0 CX01 S0\` / ZZ + XY** in the published Qollab project with **IonQ Forte 1 simulator (29q)** selected. The reported independent job produced:
+Stage 4.4 was also observed executing **`H0 CX01 S0` / ZZ + XY** in the published Qollab project with **IonQ Forte 1 simulator (29q)** selected. The reported independent job produced:
 
 | Backend | Shots / basis | ZZ | XY | Witness \(S\) | Lower bound |
 |---|---:|---:|---:|---:|---:|
@@ -69,7 +69,7 @@ The exported result was pasted into the public reviewer and displayed **PASS —
 ## Judge quick start — 2 minutes
 
 1. Open [ClaimBreak on Qollab](https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co) and select its public **v1.2** project. Choose **Qiskit Built-in Simulator (24q)** for the fastest guided run.
-2. Open **Open Challenge D**. Use the visual composer to make \`H0 CX01 S0\`, select **Source is separable**, **ZZ + XY**, and **128 shots per basis**.
+2. Open **Open Challenge D**. Use the visual composer to make `H0 CX01 S0`, select **Source is separable**, **ZZ + XY**, and **128 shots per basis**.
 3. Forecast **Evidence insufficient** and select **Lock forecast & collect real quantum evidence**. Inspect the actual returned data; ideal values are an expectation, **not a guaranteed hard-coded outcome**.
 4. If the one-sided witness lower bound is above 1, select **Refute submitted claim**. If it is not, choose a verdict supported by the evidence. Use **Display evidence JSON** → **Select all JSON**.
 5. Open the [Evidence Reviewer](https://faadil1.github.io/ClaimBreak/), paste the exported JSON, and choose **Verify pasted record**. Inspect the verdict and its pass/warning distinction.
@@ -90,7 +90,7 @@ This is an **educational quantum investigation tool**, not a fraud detector, gen
 
 ## Architecture
 
-\`\`\`text
+```text
 Player / creator (Qollab JS + Qiskit)
     │ circuit + exact claim + predeclared protocol + forecast
     ▼
@@ -102,21 +102,21 @@ Witness + one-sided bound + admissible verdict
     ▼
 Independent Evidence Reviewer (static HTML / browser, no backend access)
     └── recalculates counts, bounds, claims and event consistency
-\`\`\`
+```
 
 The source grammar is intentionally restricted. For two-basis experiments the circuit includes **two independently prepared source registers**, one for each measurement setting; **128 circuit shots yield 128 observations per setting**, *not* 256 backend jobs or 256 shots per setting.
 
 ## Run locally
 
-The quantum product itself **requires the Qollab JS/Qiskit environment**: paste \`qollab/index.html\`, \`qollab/main.css\`, and \`qollab/main.js\` into their respective panes, select a supported simulator, and use **Run Project**. The backend object is provided by Qollab; a standalone Node process is not a replacement.
+The quantum product itself **requires the Qollab JS/Qiskit environment**: paste `qollab/index.html`, `qollab/main.css`, and `qollab/main.js` into their respective panes, select a supported simulator, and use **Run Project**. The backend object is provided by Qollab; a standalone Node process is not a replacement.
 
-The review interface is a static app: visit [GitHub Pages](https://faadil1.github.io/ClaimBreak/) or open the root \`index.html\` locally. To run checks, use **Node.js 20+**, with no external npm dependencies:
+The review interface is a static app: visit [GitHub Pages](https://faadil1.github.io/ClaimBreak/) or open the root `index.html` locally. To run checks, use **Node.js 20+**, with no external npm dependencies:
 
-\`\`\`bash
+```bash
 npm test
 npm run check:qollab
 npm run build:reviewer
-\`\`\`
+```
 
 GitHub Actions repeats the syntax and verifier regression suite. [Reproduction and failure recovery](docs/RUNBOOK.md) · [Scientific method and statistical assumptions](docs/SCIENTIFIC_METHOD.md) · [Evidence provenance](docs/EVIDENCE_PROVENANCE.md).
 
