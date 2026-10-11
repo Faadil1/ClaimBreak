@@ -33,9 +33,9 @@ See [Stage 4.4 public card and judge walkthrough](docs/PUBLIC_SUBMISSION_STAGE44
 
 ## Stage 4.3 — Open Challenge Exchange (observed on Qollab BasicSimulator)
 
-The [Open Challenge Exchange](docs/OPEN_CHALLENGE_EXPERIMENT.md) is **the currently merged product direction**, with one observed custom-source BasicSimulator run; it is distinct from the previously observed Stage 4.1 remote-IonQ simulator evidence. A creator authors a new two-qubit gate sequence from H/Z/CX and an exact entanglement/separability/fidelity claim; an examiner can import the portable JSON, design a basis/shot experiment, and send that actual circuit through Qollab. The reviewer independently recalculates the outcome and checks the declared source-lock history, without claiming source secrecy or backend authentication.
+The [Open Challenge Exchange](docs/OPEN_CHALLENGE_EXPERIMENT.md) was the **historical Stage 4.3 precursor to the currently released Stage 4.4**, with one observed custom-source BasicSimulator run; it is distinct from the previously observed Stage 4.1 remote-IonQ simulator evidence. A creator authors a new two-qubit gate sequence from H/Z/CX and an exact entanglement/separability/fidelity claim; an examiner can import the portable JSON, design a basis/shot experiment, and send that actual circuit through Qollab. The reviewer independently recalculates the outcome and checks the declared source-lock history, without claiming source secrecy or backend authentication.
 
-**Observed:** user-authored `H1 CX10 Z1` / separability claim, minus witness, 128 shots per basis, one reported BasicSimulator job and independently recalculated Stage 4.3 reviewer PASS. [See the user-exported receipt](evidence/observed/qollab-basic-simulator-custom-case-d-2026-10-11.json). **Not demonstrated:** independently authored second-person exchange, broader statistical reliability, physical QPU attestation, Stage 4.3 on remote IonQ Simulator or official Qollab project publication/submission.
+**Observed:** user-authored `H1 CX10 Z1` / separability claim, minus witness, 128 shots per basis, one reported BasicSimulator job and independently recalculated Stage 4.3 reviewer PASS. [See the user-exported receipt](evidence/observed/qollab-basic-simulator-custom-case-d-2026-10-11.json). **Not demonstrated for Stage 4.3:** independently authored second-person exchange, broader statistical reliability, physical QPU attestation, or Stage 4.3 on remote IonQ Simulator. **The separate Stage 4.4 public publication is confirmed**, but official hackathon team submission remains unconfirmed.
 
 ## Stage 4.2 candidate — Quantum Cross-Examination
 
@@ -66,7 +66,7 @@ See [Stage 4.2 experience and truth boundary](docs/CROSS_EXAMINATION.md).
 ### Source structure
 
 ```text
-qollab/                Live JS/Qiskit project (Stage 4.3 custom-source release; 4.1 fallback evidenced)
+qollab/                Live JS/Qiskit project (Stage 4.4 visual creator and phase protocols)
 reviewer/index.html    Self-contained, offline reviewer — open locally
 reviewer/verifier.mjs  Independent verifier, tested under Node
 reviewer/app.js        Review desk interface
@@ -80,7 +80,7 @@ LICENSE                MIT
 
 ## Verification, not overclaiming
 
-A user-provided [IonQ Simulator Stage 4.1 JSON receipt](evidence/observed/ionq-simulator-case-b-2026-10-10.json) is included; see [provenance classification](docs/EVIDENCE_PROVENANCE.md). The user has supplied successful **Qiskit BasicSimulator** receipts for Stage 4.1 recovery, and a successful **IonQ Simulator** Stage 4.1 receipt for Case B with `F_upper≈0.829`, `supported=true`. These are simulator results, not live physical IonQ QPU runs of Stage 4.1. See [validation matrix](docs/VALIDATION_MATRIX.md). No repeated independent hardware reliability, unaffiliated user adoption, or final hackathon team submission is claimed. The Qollab v1.1 project publication has been observed, but its Stage 4.4 update remains pending. GitHub Pages has been publicly loaded in Edge for previous receipts; Stage 4.4 reviewer import in the public browser remains to be verified.
+A user-provided [IonQ Simulator Stage 4.1 JSON receipt](evidence/observed/ionq-simulator-case-b-2026-10-10.json) is included; see [provenance classification](docs/EVIDENCE_PROVENANCE.md). The user has supplied successful **Qiskit BasicSimulator** receipts for Stage 4.1 recovery, and a successful **IonQ Simulator** Stage 4.1 receipt for Case B with `F_upper≈0.829`, `supported=true`. These are simulator results, not live physical IonQ QPU runs of Stage 4.1. See [validation matrix](docs/VALIDATION_MATRIX.md). No repeated independent hardware reliability, unaffiliated user adoption, or final hackathon team submission is claimed. Stage 4.4 is published on the publicly accessible Qollab v1.2 card, and its source editor, simulator interaction, and verdict have been observed in a signed-out browser. The Stage 4.4 IonQ simulator record was separately pasted into the public GitHub Pages reviewer and displayed internal PASS.
 
 The offline reviewer cannot certify that user-controlled JSON was genuinely produced by IonQ. It detects inconsistent *contents*, not a well-forged document. Its included case B example is **synthetic** and visibly labeled as such.
 
