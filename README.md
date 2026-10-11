@@ -8,7 +8,7 @@ A Qollab / IonQ Global Quantum Hackathon project built around a real investigati
 
 ## Try the product
 
-**Live Quantum Court (Qollab):** https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co — **v1.1 publication observed** in the author UI. The newer Stage 4.4 source is merged in GitHub, but updating the Qollab editor and pressing **Publish** again remains a separate action; public Stage 4.4 is not yet confirmed.
+**Live Quantum Court (Qollab):** https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co — **public v1.2 Stage 4.4** publication and signed-out browser execution observed. A separate Qollab **IonQ Forte 1 simulator (29q)** run and reviewer PASS have also been screen-captured, without physical QPU or cryptographic attestation.
 
 **Independent reviewer (public GitHub Pages):** https://faadil1.github.io/ClaimBreak/ — independently observed accessible in Microsoft Edge, including an imported author-exported Qollab Stage 4.3 custom-source receipt with internal audit PASS. For offline use download root `index.html` and open it in a desktop browser. No Qiskit or account is required for offline review.
 
@@ -16,7 +16,7 @@ A Qollab / IonQ Global Quantum Hackathon project built around a real investigati
 
 **Current Stage 4.4 public description and judge quick-start:** [Public submission copy](docs/PUBLIC_SUBMISSION_STAGE44.md). Official hackathon team submission is still not confirmed.
 
-## Stage 4.4 — Visual Circuit Studio and the Invisible Phase (current merged code, Qollab publish pending)
+## Stage 4.4 — Visual Circuit Studio and the Invisible Phase (published public v1.2, simulator runs observed)
 
 Stage 4.4 extends the open two-qubit laboratory with one-tap visual gate construction, H/Z/S/T/CX operations, phase-sensitive **ZZ±XY** protocols alongside ZZ±XX, and a geometric witness plot generated from actual backend counts. Choosing the correct observable now determines whether the same user-authored entangled state can be certified. The source compiler is still limited to 12 whitelisted operations, not arbitrary QASM.
 
@@ -27,7 +27,7 @@ Stage 4.4 extends the open two-qubit laboratory with one-tap visual gate constru
 | ZZ + XY | 2.000 | 1.621 | `REFUTE_SPECIFIC_CLAIM` (entanglement established) |
 | ZZ + XX | 1.172 | 0.793 | `NOT_ESTABLISHED` (cannot conclude separability) |
 
-The author-exported [XY](evidence/observed/qollab-basic-simulator-phase-xy-stage44-2026-10-11.json) and [XX](evidence/observed/qollab-basic-simulator-phase-xx-stage44-2026-10-11.json) receipts were independently recalculated by the reviewer and pass internal-coherence tests. They are **not** cryptographically attested and do not support pooling two 1% per-run error rates into one overall guarantee. Stage 4.4 has not been observed on remote IonQ, physical QPU, or with independent outside users. The published Qollab project must still be updated from the newly merged code.
+The author-exported [XY](evidence/observed/qollab-basic-simulator-phase-xy-stage44-2026-10-11.json) and [XX](evidence/observed/qollab-basic-simulator-phase-xx-stage44-2026-10-11.json) receipts were independently recalculated by the reviewer and pass internal-coherence tests. They are **not** cryptographically attested and do not support pooling two 1% per-run error rates into one overall guarantee. Stage 4.4 has additionally been observed through a Qollab-selected **IonQ Forte 1 simulator** job, with reported `ZZ=0.96875`, `XY=1`, `S=1.96875`, and `lower=1.589393`, plus a public reviewer showing internal PASS. [Screenshot-grounded IonQ case details](docs/STAGE44_IONQ_SIMULATOR_OBSERVATION_2026-10-11.md). The **complete original IonQ JSON is not yet committed**; do not substitute the summary for a full receipt. Stage 4.4 has not been observed on physical QPU or with independently recruited outside users.
 
 See [Stage 4.4 public card and judge walkthrough](docs/PUBLIC_SUBMISSION_STAGE44.md).
 
