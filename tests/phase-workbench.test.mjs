@@ -94,3 +94,18 @@ test('Stage 4.4 synthetic XY receipt passes independently, while altered fields 
 test('exactly one backend.run call remains in Qollab runtime',()=>{
  assert.equal((src.match(/await backend\.run\(/g)||[]).length,1);
 });
+
+test('observed Qollab Stage 4.4 phase run is independently consistent, including rejected verdict',()=>{
+ const path=new URL('../evidence/observed/qollab-basic-simulator-phase-xy-stage44-2026-10-11.json',import.meta.url);
+ const receipt=JSON.parse(readFileSync(path,'utf8'));
+ const review=verifyReceipt(receipt);
+ assert.equal(review.status,'PASS',
+   review.checks.filter(c=>c.severity==='error'&&!c.pass).map(c=>c.label).join('; '));
+ assert.equal(review.computed.zz,1);
+ assert.equal(review.computed.xy,1);
+ assert.equal(review.computed.xx,null);
+ assert.equal(review.computed.lower>1,true);
+ assert.equal(receipt.challenge.status,'AWAITING_ADMISSIBLE_VERDICT');
+ assert.equal(receipt.decision.supported,false);
+ assert.equal(receipt.execution.backendName,'basic_simulator');
+});
