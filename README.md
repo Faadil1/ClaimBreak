@@ -4,7 +4,7 @@
 
 **One quantum source. Two experiments. Two different conclusions.**
 
-[**Play ClaimBreak on Qollab**](https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co) · [**Open the independent Evidence Reviewer**](https://faadil1.github.io/ClaimBreak/) · [**Run the tests**](#run-locally) · [**Scientific details**](docs/SCIENTIFIC_METHOD.md)
+[**Watch the 2:50 demo**](https://youtu.be/NPCGNXBqOQw) · [**Play ClaimBreak on Qollab**](https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co) · [**Open the independent Evidence Reviewer**](https://faadil1.github.io/ClaimBreak/) · [**Run the tests**](#run-locally) · [**Scientific details**](docs/SCIENTIFIC_METHOD.md)
 
 **Qollab × IonQ Global Quantum Hackathon 2026** · **Quantum Unlocked** · **MIT licensed**
 
