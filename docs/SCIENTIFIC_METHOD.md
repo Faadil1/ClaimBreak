@@ -1,23 +1,55 @@
-# Scientific method and limitations
+# Scientific method
 
-The protocols measure two-qubit correlations in independently prepared registers, each with N samples. A dual-basis experiment uses **one circuit, N circuit shots, and N marginal observations for each base**; it is not two backend jobs.
+ClaimBreak teaches **experimental design under uncertainty**, not device-independent quantum certification. Its interactive source builder compiles at most 12 instructions from H, Z, S, T and CNOT on two qubits. The curated cases cover Bell Φ+, Bell Φ− and a GHZ-purified separable imitation.
 
-## Preparation
-- A: Bell Phi+ = (|00>+|11>)/sqrt(2), with ideal ZZ=+1 and XX=+1.
-- B: the separable reduced state rho = 0.5|00><00| + 0.5|11><11|. A GHZ purification is built and the environment is **not postselected**. Ideal ZZ=+1 and XX=0.
-- C: Bell Phi- = (|00>-|11>)/sqrt(2), with ideal ZZ=+1 and XX=-1.
+## The witness tests
 
-**ZZ alone cannot distinguish A from B.** For any separable two-qubit state, ZZ+XX <=1 and ZZ-XX <=1, using the Bloch-sphere bound for product states and convexity for separable mixtures. A witness violation supports entanglement; failure to violate does **not** demonstrate separability.
+For product states, the relevant local Pauli expectations satisfy a Bloch-sphere bound. For all separable two-qubit states (by convexity):
 
-## One-sided finite-shot bound
-Assuming representative independent +/-1 parity observations for Z and X, predeclared analysis, trusted measurement axes and no arbitrary postselection, a conservative Hoeffding inequality is
+- `⟨ZZ⟩ + ⟨XX⟩ ≤ 1` and `⟨ZZ⟩ − ⟨XX⟩ ≤ 1`
+- `⟨ZZ⟩ + ⟨XY⟩ ≤ 1` and `⟨ZZ⟩ − ⟨XY⟩ ≤ 1`
 
-P(S_observed-S_true >= t) <= exp(-N t^2/4).
+A witness value **above 1** supports entanglement under trusted measurement assumptions. Failure to exceed the threshold **does not prove separability**.
 
-Set alpha=0.01 and margin=2 sqrt(ln(1/alpha)/N). With S=ZZ+XX or ZZ-XX, certify only when S_observed-margin >1. The same formula also supplies a one-sided upper bound for S when needed, with the corresponding tail.
+In an **XY measurement**, Qollab applies H to the first source qubit to read X and S† then H to the second source qubit to read Y, before Z-basis measurement. The register counts are converted to parity correlations.
 
-## Exact claim-specific refutation
-The Phi+ projector is (I+XX-YY+ZZ)/4. Because -<YY> <=1, fidelity to Phi+ obeys F <=(2+ZZ+XX)/4. For predeclared **plus** measurements, ClaimBreak computes F_upper=min(1,(2+S_observed+margin)/4). The stated source B claim F>=0.90 is contradicted when F_upper<0.90. This neither certifies separability nor establishes deliberate fraud.
+## Finite-shot decision rule
 
-## Scope
-The 1% bound is for a **single predeclared test**, not a familywise claim after adaptive search across many runs. Ideal simulator tests don't establish device-independent measurements, physical-QPU noise resilience, or provenance authentication. Drift, crosstalk, SPAM errors, correlation across shots, and selectively reported outcomes can invalidate stronger conclusions. Theoretical false-positive probabilities in the app are analytical comparisons, not new backend evidence.
+Each experiment creates one circuit containing an independently prepared register for each chosen basis. With N backend shots, the Z register and the second setting each yield **N parity observations**. The protocol and shot budget are locked *before* the job.
+
+For a predeclared two-setting witness `S = ZZ ± XX` or `S = ZZ ± XY`, and independent representative ±1 observations under trusted axes,
+
+```text
+Pr(S_observed - S_true >= t) <= exp(-N*t²/4)
+alpha = 0.01
+margin = 2 * sqrt(ln(1/alpha)/N)
+lower_bound = S_observed - margin
+certify only if lower_bound > 1
+```
+
+At N=128, margin ≈ 0.37935678. A 99% one-sided **per-test** confidence statement is conditional on these assumptions. It is **not** an error guarantee for arbitrarily selected or pooled runs, drift/crosstalk, unverified device calibration or post-hoc changing of the witness.
+
+## Fidelity claims
+
+For the Bell Φ+ projector,
+
+```text
+P(Phi+) = (I + XX - YY + ZZ)/4
+F(Phi+) <= (2 + ZZ + XX)/4
+```
+
+For a **predeclared plus protocol**, an upper confidence bound is
+
+```text
+F_upper = min(1, (2 + S_observed + margin)/4)
+```
+
+If this upper bound falls below a supplier's declared minimum fidelity, that **specific threshold claim** may be refuted. This is not a proof of fraud, separability or source provenance. **XY witness results must never be passed off as XX fidelity measurements.**
+
+## Signature phase example
+
+The source `H0 CX01 S0` ideally creates `(|00⟩ + i|11⟩)/√2`. Its ideal `ZZ=1`, `XY=1` and `XX=0`. Therefore a correctly selected ZZ+XY witness can certify entanglement, while ZZ+XX may remain inconclusive despite being tested on **the same source**. The observed distinct BasicSimulator runs and the IonQ simulator report are linked from [README](../README.md).
+
+## Evidence and provenance limits
+
+Qollab returns shot counts from the user-selected backend. An ideal or noise-model simulator is not a physical IonQ QPU. The evidence reviewer recalculates the numbers in a user-controlled JSON receipt and checks its internal event/decision consistency. **Reviewer PASS is not an authenticated vendor signature**. The observed and synthetic receipts are labeled separately in [Evidence provenance](EVIDENCE_PROVENANCE.md).
