@@ -9,7 +9,7 @@
 import { QuantumCircuit } from 'qiskit';
 
 const ALPHA = 0.01; // predeclared ONE selected one-sided test per execution
-const VERSION = 'stage4.3';
+const VERSION = 'stage4.4';
 const CASES = {
   A: {
     label: 'Source A', docket: 'FILE / 001', claim: 'The submitted source is entangled.',
@@ -359,7 +359,7 @@ const css = `
 @media(max-width:760px){#cb3 .grid{grid-template-columns:1fr}#cb3 .page{padding:14px}#cb3 .card{padding:16px}#cb3 .metrics{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){#cb3 *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 `;
-root.innerHTML = `<style>${css}</style><main id="cb3"><header class="header"><div class="eyebrow">CLAIMBREAK / OPEN CHALLENGE EXCHANGE / STAGE 4.3 EXPERIMENTAL</div><h1>Put your scientific certainty<br>on trial.</h1><p class="muted">Commit your prediction. Choose what to measure. Let actual quantum evidence prove you wrong — or uphold your case.</p><span class="tag" id="cb3-tag">AWAITING EXPERIMENT</span></header><div class="page" id="cb3-content" aria-live="polite"></div></main>`;
+root.innerHTML = `<style>${css}</style><main id="cb3"><header class="header"><div class="eyebrow">CLAIMBREAK / OPEN CHALLENGE EXCHANGE / STAGE 4.4 / CIRCUIT STUDIO CANDIDATE</div><h1>Put your scientific certainty<br>on trial.</h1><p class="muted">Commit your prediction. Choose what to measure. Let actual quantum evidence prove you wrong — or uphold your case.</p><span class="tag" id="cb3-tag">AWAITING EXPERIMENT</span></header><div class="page" id="cb3-content" aria-live="polite"></div></main>`;
 const content = root.querySelector('#cb3-content');
 const tag = root.querySelector('#cb3-tag');
 function layout(left, right='') { content.innerHTML = `<div class="grid"><section>${left}</section><aside>${right}</aside></div>`; }
@@ -370,7 +370,8 @@ function setupView() {
   const openLab = state.selection.caseId==='D'?`<div class="callout"><div class="eyebrow">OPEN QUANTUM SOURCE LAB / EXPERIMENTAL</div>
     <h2>Author a quantum experiment, not just a verdict</h2>
     <p>Your H/Z/CX gate sequence compiles into the real backend circuit. Your authored claim can be tested, rejected or left unresolved.</p>
-    <label for="cb3-gates">Two-qubit source blueprint</label>
+    ${sourceWorkbench(state.custom.gates)}
+    <label for="cb3-gates">Two-qubit source blueprint · optional text editor</label>
     <input id="cb3-gates" data-field="gates" value="${escapeHTML(state.custom.gates)}" maxlength="110"
       style="width:100%;padding:12px;font:14px ui-monospace,Consolas,monospace;background:#fff;color:#17271d">
     <p class="fine">Permitted gates: H0 H1 Z0 Z1 CX01 CX10. Sequence max 12 gates; initial state |00⟩.</p>
@@ -399,7 +400,7 @@ function setupView() {
       <select id="cb3-forecast" data-field="forecast"><option value="">Choose the decision you expect the evidence to support</option>
       ${[['CERTIFIED_ENTANGLEMENT','Certify entanglement'],['REFUTE_SPECIFIC_CLAIM','Refute the submitted claim'],['NOT_ESTABLISHED','Admit evidence is insufficient']]
         .map(([v,l])=>`<option value="${v}" ${v===state.challenge.forecast?'selected':''}>${l}</option>`).join('')}</select>
-      <div class="mission-foot"><span class="tag">1 QUANTUM JOB</span><span class="tag">${state.selection.shots} SHOTS / BASIS</span>
+      <div class="callout"><strong>Pre-run statistical power:</strong> This shot budget gives a one-sided two-basis witness margin of <strong>${fmt(2*Math.sqrt(Math.log(1/ALPHA)/state.selection.shots))}</strong>. More shots narrow this bound but cannot recover an unmeasured basis. This is theoretical, not a measurement.</div><div class="mission-foot"><span class="tag">1 QUANTUM JOB</span><span class="tag">${state.selection.shots} SHOTS / BASIS</span>
       <span class="tag">${testIsTwo?2:1} MEASUREMENT ${testIsTwo?'BASES':'BASIS'}</span></div>
       <p class="fine">Shots are real backend resources, not game currency. An accurate forecast must survive actual bitstring counts and the calibrated bound.</p>
     </div>
@@ -446,7 +447,7 @@ function evidenceView() {
       ${challenge.caseResolved?'The precise claim can be resolved from this measured evidence.':'The scientifically defensible outcome is abstention.'}
       ${state.decisionHistory.length>1?'Your incorrect decision attempts remain permanently in this session receipt.':''}</p>`:''}
   </div>`;
-  layout(`<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / evidence acquired</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(activeClaim())}</p><p class="fine">Actual measurements from this execution only. No other source has been measured in this Run.</p>${missionBlock}<div class="signal-rail">${parityRail('Z-BASIS / ZZ',e.zz)}${parityRail('X-BASIS / XX',e.xx)}</div><div class="metrics"><div class="metric"><small>ZZ observed</small><strong>${fmt(e.zz)}</strong></div><div class="metric"><small>XX observed</small><strong>${e.xx===null?'NOT MEASURED':fmt(e.xx)}</strong></div><div class="metric"><small>Selected witness S</small><strong>${fmt(e.S)}</strong></div><div class="metric"><small>One-sided margin (α = 0.01)</small><strong>${fmt(e.margin)}</strong></div></div><div class="callout">${scienceLine}</div>
+  layout(`<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / evidence acquired</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(activeClaim())}</p><p class="fine">Actual measurements from this execution only. No other source has been measured in this Run.</p>${missionBlock}<div class="signal-rail">${parityRail('Z-BASIS / ZZ',e.zz)}${parityRail('X-BASIS / XX',e.xx)}</div>${witnessPlane(e,state.selection.protocol)}<div class="metrics"><div class="metric"><small>ZZ observed</small><strong>${fmt(e.zz)}</strong></div><div class="metric"><small>XX observed</small><strong>${e.xx===null?'NOT MEASURED':fmt(e.xx)}</strong></div><div class="metric"><small>Selected witness S</small><strong>${fmt(e.S)}</strong></div><div class="metric"><small>One-sided margin (α = 0.01)</small><strong>${fmt(e.margin)}</strong></div></div><div class="callout">${scienceLine}</div>
   ${(state.selection.caseId==='B'||(state.selection.caseId==='D'&&state.custom.claimType==='FIDELITY_MIN'))&&e.fidelityUpper!==null?
     `<div class="callout"><strong>Claim-specific test:</strong> one-sided 99% upper bound for Bell Φ+ fidelity:
     <b>${fmt(e.fidelityUpper)}</b>. Declared threshold:
@@ -504,7 +505,7 @@ function exportRecord() {
   };
   let panel=root.querySelector('#cb3-json-panel');
   if(!panel){ panel=document.createElement('section'); panel.id='cb3-json-panel';panel.className='card';content.prepend(panel); }
-  panel.innerHTML=`<div class="eyebrow">Evidence / manual export</div><h2>Copy the exact JSON</h2><p class="fine">This browser may block Blob downloads. Select all JSON, press Ctrl+C, paste into Windows Notepad, then Save as <strong>claimbreak-stage4-3-open-challenge-evidence.json</strong> (All files / UTF-8).</p><div class="actions"><button type="button" data-action="select-json">Select all JSON</button><button type="button" class="outline" data-action="close-json">Close</button></div><textarea id="cb3-json-text" aria-label="Exported evidence JSON" readonly spellcheck="false"></textarea><p class="fine" id="cb3-copy-status">No further quantum job is needed.</p>`;
+  panel.innerHTML=`<div class="eyebrow">Evidence / manual export</div><h2>Copy the exact JSON</h2><p class="fine">This browser may block Blob downloads. Select all JSON, press Ctrl+C, paste into Windows Notepad, then Save as <strong>claimbreak-stage4-4-visual-challenge-evidence.json</strong> (All files / UTF-8).</p><div class="actions"><button type="button" data-action="select-json">Select all JSON</button><button type="button" class="outline" data-action="close-json">Close</button></div><textarea id="cb3-json-text" aria-label="Exported evidence JSON" readonly spellcheck="false"></textarea><p class="fine" id="cb3-copy-status">No further quantum job is needed.</p>`;
   panel.querySelector('textarea').value=JSON.stringify(out,null,2);
   panel.scrollIntoView({block:'start',behavior:'auto'});
 }
@@ -527,6 +528,20 @@ root.addEventListener('change',ev=>{
 root.addEventListener('click',ev=>{
   const b=ev.target.closest?.('button[data-action]'); if(!b)return;
   const act=b.dataset.action;
+  if(state.phase==='setup'&&state.selection.caseId==='D'&&
+     (act==='gate-add'||act==='gate-undo'||act==='gate-clear')){
+    const tokens=String(state.custom.gates||'').trim().toUpperCase().split(/\s+/).filter(Boolean);
+    let next=tokens;
+    if(act==='gate-add'){
+      const gate=b.dataset.gate;
+      if(SOURCE_GATES.has(gate)&&tokens.length<12&&tokens.every(g=>SOURCE_GATES.has(g)))
+        next=[...tokens,gate];
+    }else if(act==='gate-undo')next=tokens.slice(0,-1);
+    else next=[];
+    state.custom.gates=next.join(' ');
+    render();
+    return;
+  }
   if(act==='start'&&state.phase==='setup'&&startResolve&&state.challenge.forecast){
     if(state.selection.caseId==='D'){
       try {state.custom=validateCustomBlueprint(state.custom);}
