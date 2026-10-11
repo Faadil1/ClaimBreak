@@ -136,5 +136,11 @@ test('two actual Stage 4.4 Qollab source receipts reveal protocol sensitivity wi
  assert.equal(checkedA.computed.lower>1,true);
  assert.equal(checkedB.computed.lower<=1,true);
  assert.equal(b.challenge.forecastSupported,true);
- assert.equal(b.decision,null,'Do not invent a final verdict before user files it');
+ assert.equal(b.challenge.status,'FORECAST_UPHELD');
+ assert.equal(b.challenge.caseResolved,false,'Abstention is not a resolution of separability');
+ assert.equal(b.decision.verdict,'NOT_ESTABLISHED');
+ assert.equal(b.decision.supported,true);
+ assert.equal(b.decisionHistory.length,1);
+ assert.equal(b.events.filter(x=>x.type==='DECISION_ACCEPTED').length,1);
+ assert.equal(b.events.filter(x=>x.type==='LIVE_QUANTUM_RUN_COMPLETED').length,1);
 });
