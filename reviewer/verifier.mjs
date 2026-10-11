@@ -33,15 +33,18 @@ export function verifyReceipt(input) {
   let customValid=false;
   if(id==='D'){
     const tokens=typeof custom?.gates==='string'?custom.gates.trim().split(/ +/):[];
-    customValid=record.version==='stage4.3' && tokens.length>=1 && tokens.length<=12 &&
-      tokens.every(x=>['H0','H1','Z0','Z1','CX01','CX10'].includes(x)) &&
+    customValid=(record.version==='stage4.3'||record.version==='stage4.4') && tokens.length>=1 && tokens.length<=12 &&
+      tokens.every(x=>(record.version==='stage4.4'?
+        ['H0','H1','Z0','Z1','S0','S1','T0','T1','CX01','CX10']:
+        ['H0','H1','Z0','Z1','CX01','CX10']).includes(x)) &&
       ['ENTANGLED','SEPARABLE','FIDELITY_MIN'].includes(custom?.claimType) &&
       typeof custom?.threshold==='number' && custom.threshold>=.60 && custom.threshold<=.95;
     add('Custom source blueprint uses known circuit instructions and claim',customValid);
     if(!customValid)return {status:'FAIL',checks,computed:null,record};
   }
   const pair=PAIRS[id];
-  const dual=kind==='plus'||kind==='minus';
+  const isXY=(kind==='xyplus'||kind==='xyminus')&&record.version==='stage4.4';
+  const dual=kind==='plus'||kind==='minus'||isXY;
   add('Known case and predeclared protocol', !!pair && (dual||kind==='z'));
   if (!pair || !(dual||kind==='z')) return {status:'FAIL',checks,computed:null,record};
   const nQubits=dual?pair.dual:pair.single;
@@ -59,21 +62,24 @@ export function verifyReceipt(input) {
   add('Shot totals match the predeclared count',Number.isInteger(cfg.shots) && cfg.shots>0 && n===cfg.shots && n===exe.shots);
   add('Record reports one quantum job',exe.quantumJobs===1);
   add('Record flags pre-run protocol declaration',cfg.predeclaredBeforeQuantumRun===true);
-  if (exe.settings) add('Declared measurement settings agree with protocol',JSON.stringify(exe.settings) === JSON.stringify(dual?['Z','X']:['Z']));
+  if (exe.settings) add('Declared measurement settings agree with protocol',JSON.stringify(exe.settings) === JSON.stringify(dual?['Z',isXY?'XY':'X']:['Z']));
   if (record.rawCounts) add('Duplicated counts fields are identical',JSON.stringify(Object.entries(record.rawCounts).sort())===JSON.stringify(entries.slice().sort()));
   if(n<=0){fail('Nonzero total shots'); return {status:'FAIL',checks,computed:null,record};}
   const corr=([qa,qb])=> entries.reduce((acc,[bits,count])=>acc+(bits[nQubits-1-qa]===bits[nQubits-1-qb]?count:-count),0)/n;
   const zz=corr(pair.z);
-  const xx=dual?corr(pair.x):null;
+  const observedSecond=dual?corr(pair.x):null;
+  const xx=isXY?null:observedSecond;
+  const xy=isXY?observedSecond:null;
   const alpha=Number(protocol.alphaPerRun);
   add('Valid declared per-run statistical error alpha',Number.isFinite(alpha)&&alpha>0&&alpha<1);
   if (!(alpha>0 && alpha<1)) return {status:'FAIL',checks,computed:null,record};
-  const S=dual?zz+(kind==='minus'?-xx:xx):null;
+  const S=dual?zz+((kind==='minus'||kind==='xyminus')?-observedSecond:observedSecond):null;
   const margin=dual?2*Math.sqrt(Math.log(1/alpha)/n):null;
   const lower=dual?S-margin:null;
   const fidelityUpper=kind==='plus'?Math.min(1,(2+S+margin)/4):null;
   const certified=lower!==null && lower>1;
   const computed={zz,xx,S,margin,lower,fidelityUpper,certified,shotsReturned:n};
+  if(record.version==='stage4.4')computed.xy=xy;
   for (const [key,value] of Object.entries(computed)) {
     if(!record.evidence || !(key in record.evidence)) { fail(`Reported evidence includes ${key}`);continue; }
     const reported=record.evidence[key];
@@ -117,7 +123,7 @@ export function verifyReceipt(input) {
   } else warn('No committed or rejected decision in this receipt');
   // Stage 4.2: re-evaluate the player's precommitted strategy from raw counts,
   // rather than trusting the copied on-screen challenge assessment.
-  if(record.version==='stage4.2'||record.version==='stage4.3'){
+  if(record.version==='stage4.2'||record.version==='stage4.3'||record.version==='stage4.4'){
     const ch=record.challenge??{};
     const lockEvents=(record.events??[]).filter(x=>x.type==='CHALLENGE_FORECAST_LOCKED');
     const lock=lockEvents[0];

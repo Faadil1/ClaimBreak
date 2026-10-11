@@ -1,0 +1,193 @@
+{
+  "product": "ClaimBreak Quantum Evidence Court",
+  "version": "stage4.4",
+  "configuration": {
+    "caseId": "D",
+    "protocol": "plus",
+    "shots": 128,
+    "predeclaredBeforeQuantumRun": true,
+    "protocolLabel": "Two bases — witness ZZ + XX"
+  },
+  "execution": {
+    "backendName": "basic_simulator",
+    "acquiredAtUtc": "2026-10-11T15:42:24.546Z",
+    "jobId": "2904ec21-b274-447d-994d-96d5c80c9af4",
+    "shots": 128,
+    "qubits": 4,
+    "settings": [
+      "Z",
+      "X"
+    ],
+    "rawCounts": {
+      "1000": 15,
+      "1011": 14,
+      "1100": 24,
+      "1111": 20,
+      "0000": 19,
+      "0100": 14,
+      "0011": 12,
+      "0111": 10
+    },
+    "mode": "LIVE_QISKIT_BACKEND_RESULT",
+    "deviceClass": "UNVERIFIED_IN_APP",
+    "quantumJobs": 1
+  },
+  "protocol": {
+    "alphaPerRun": 0.01,
+    "margin": "2*sqrt(ln(1/alpha)/N) for two independent ±1 setting averages",
+    "scope": "single predeclared test in this run; no familywise claim across repeated runs",
+    "assumptions": "trusted bases, independent representative measurements, no arbitrary postselection"
+  },
+  "evidence": {
+    "zz": 1,
+    "xx": 0.171875,
+    "xy": null,
+    "S": 1.171875,
+    "margin": 0.3793567823462866,
+    "lower": 0.7925182176537133,
+    "fidelityUpper": 0.8878079455865716,
+    "certified": false,
+    "shotsReturned": 128,
+    "protocol": "plus"
+  },
+  "auditChecks": {
+    "status": "PASS",
+    "checks": [
+      {
+        "name": "Measured shots equal predeclared shots",
+        "pass": true
+      },
+      {
+        "name": "Bitstrings have expected width",
+        "pass": true
+      },
+      {
+        "name": "One circuit requested",
+        "pass": true
+      },
+      {
+        "name": "All measured correlations are within [-1,+1]",
+        "pass": true
+      },
+      {
+        "name": "Z-only does not certify",
+        "pass": true
+      },
+      {
+        "name": "Witness and threshold agree",
+        "pass": true
+      }
+    ]
+  },
+  "theoreticalReference": null,
+  "rawCounts": {
+    "1000": 15,
+    "1011": 14,
+    "1100": 24,
+    "1111": 20,
+    "0000": 19,
+    "0100": 14,
+    "0011": 12,
+    "0111": 10
+  },
+  "decision": {
+    "attempt": 1,
+    "verdict": "NOT_ESTABLISHED",
+    "supported": true,
+    "explanation": "The submitted claim is not resolved by this evidence at the declared confidence threshold; other quantum properties may still be established.",
+    "atUtc": "2026-10-11T15:58:47.373Z"
+  },
+  "decisionHistory": [
+    {
+      "attempt": 1,
+      "verdict": "NOT_ESTABLISHED",
+      "supported": true,
+      "explanation": "The submitted claim is not resolved by this evidence at the declared confidence threshold; other quantum properties may still be established.",
+      "atUtc": "2026-10-11T15:58:47.373Z"
+    }
+  ],
+  "customBlueprint": {
+    "gates": "H0 CX01 S0",
+    "claimType": "SEPARABLE",
+    "threshold": 0.9
+  },
+  "challenge": {
+    "forecast": "NOT_ESTABLISHED",
+    "forecastSupported": true,
+    "attemptCount": 1,
+    "acceptedVerdict": "NOT_ESTABLISHED",
+    "caseResolved": false,
+    "status": "FORECAST_UPHELD",
+    "resourceUse": {
+      "quantumJobs": 1,
+      "shotsPerSetting": 128,
+      "measuredSettings": 2
+    },
+    "scoringBasis": "Forecast locked before measurement. Outcome depends on measured evidence. No extra quantum calls."
+  },
+  "events": [
+    {
+      "utc": "2026-10-11T15:42:24.508Z",
+      "type": "CUSTOM_CHALLENGE_BLUEPRINT_LOCKED",
+      "detail": {
+        "gates": "H0 CX01 S0",
+        "claimType": "SEPARABLE",
+        "threshold": 0.9
+      }
+    },
+    {
+      "utc": "2026-10-11T15:42:24.508Z",
+      "type": "CHALLENGE_FORECAST_LOCKED",
+      "detail": {
+        "forecast": "NOT_ESTABLISHED",
+        "shots": 128,
+        "protocol": "plus"
+      }
+    },
+    {
+      "utc": "2026-10-11T15:42:24.508Z",
+      "type": "EXPERIMENT_PREDECLARED",
+      "detail": {
+        "caseId": "D",
+        "protocol": "plus",
+        "shots": 128
+      }
+    },
+    {
+      "utc": "2026-10-11T15:42:24.546Z",
+      "type": "LIVE_QUANTUM_RUN_COMPLETED",
+      "detail": {
+        "backend": "basic_simulator",
+        "shots": 128,
+        "qubits": 4,
+        "quantumJobs": 1
+      }
+    },
+    {
+      "utc": "2026-10-11T15:42:30.712Z",
+      "type": "EVIDENCE_RECORD_DISPLAYED",
+      "detail": {
+        "delivery": "manual_copy",
+        "newQuantumJob": false
+      }
+    },
+    {
+      "utc": "2026-10-11T15:58:47.379Z",
+      "type": "DECISION_ACCEPTED",
+      "detail": {
+        "attempt": 1,
+        "verdict": "NOT_ESTABLISHED",
+        "supported": true,
+        "noAdditionalQuantumJob": true
+      }
+    },
+    {
+      "utc": "2026-10-11T15:58:53.761Z",
+      "type": "EVIDENCE_RECORD_DISPLAYED",
+      "detail": {
+        "delivery": "manual_copy",
+        "newQuantumJob": false
+      }
+    }
+  ]
+}
