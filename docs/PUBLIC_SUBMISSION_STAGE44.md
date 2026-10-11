@@ -31,6 +31,8 @@ We separately exercised Stage 4.4 on Qollab's **IonQ Forte 1 simulator (29q)** w
 
 ## Explore
 
+**Video demo (2 min 50 s):** https://youtu.be/NPCGNXBqOQw
+
 **Play:** https://qollab.xyz/u/Faadil/claimbreak-quantum-evidence-co
 
 **Independent Evidence Reviewer:** https://faadil1.github.io/ClaimBreak/
