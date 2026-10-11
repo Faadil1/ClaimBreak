@@ -37,7 +37,9 @@ const CASES = {
 const PROTOCOLS = {
   z: { label: 'Z only — insufficient baseline', summary: 'Measure ZZ only; no entanglement witness or fidelity bound.' },
   plus: { label: 'Two bases — witness ZZ + XX', summary: 'Collect independent ZZ and XX samples and test S = ZZ + XX.' },
-  minus: { label: 'Two bases — witness ZZ − XX', summary: 'Collect independent ZZ and XX samples and test S = ZZ − XX.' }
+  minus: { label: 'Two bases — witness ZZ − XX', summary: 'Collect independent ZZ and XX samples and test S = ZZ − XX.' },
+  xyplus: { label: 'Phase probe — witness ZZ + XY', summary: 'Measure Z on both qubits, then X on q0 and Y on q1; test ZZ + XY.' },
+  xyminus: { label: 'Phase probe — witness ZZ − XY', summary: 'Measure Z on both qubits, then X on q0 and Y on q1; test ZZ − XY.' }
 };
 const root = document.getElementById('container');
 if (!root) throw new Error('ClaimBreak requires the Qollab starter index.html element #container.');
@@ -66,7 +68,7 @@ function backendLabel() {
 // OPEN CHALLENGE SOURCE — whitelisted small circuits avoid arbitrary code execution.
 // This is intentionally not a general QASM interpreter; the author creates a
 // previously unseen source and an independently checkable precise claim.
-const SOURCE_GATES=new Set(['H0','H1','Z0','Z1','CX01','CX10']);
+const SOURCE_GATES=new Set(['H0','H1','Z0','Z1','S0','S1','T0','T1','CX01','CX10']);
 const CLAIM_TYPES=new Set(['ENTANGLED','SEPARABLE','FIDELITY_MIN']);
 function validateCustomBlueprint(raw) {
   if(!raw || typeof raw!=='object'||Array.isArray(raw)) throw new Error('Challenge must be a JSON object.');
@@ -74,7 +76,7 @@ function validateCustomBlueprint(raw) {
   if(text.length>110) throw new Error('Too many circuit gates.');
   const tokens=text.split(/ +/).filter(Boolean);
   if(tokens.length<1||tokens.length>12||tokens.some(g=>!SOURCE_GATES.has(g)))
-    throw new Error('Only H0, H1, Z0, Z1, CX01 and CX10 are allowed (1–12 gates).');
+    throw new Error('Only H0/H1, Z0/Z1, S0/S1, T0/T1, CX01/CX10 are allowed (1–12 gates).');
   if(!CLAIM_TYPES.has(raw.claimType)) throw new Error('Invalid claim type.');
   const threshold=Number(raw.threshold);
   if(!Number.isFinite(threshold)||threshold<0.60||threshold>0.95)
@@ -95,6 +97,10 @@ function applyCustomGates(circuit,offset,blueprint) {
     else if(gate==='H1')circuit.h(offset+1);
     else if(gate==='Z0')circuit.z(offset);
     else if(gate==='Z1')circuit.z(offset+1);
+    else if(gate==='S0')circuit.s(offset);
+    else if(gate==='S1')circuit.s(offset+1);
+    else if(gate==='T0')circuit.t(offset);
+    else if(gate==='T1')circuit.t(offset+1);
     else if(gate==='CX01')circuit.cx(offset,offset+1);
     else if(gate==='CX10')circuit.cx(offset+1,offset);
   }
@@ -105,7 +111,7 @@ function applyCustomGates(circuit,offset,blueprint) {
 // not a single random |00> or |11> choice reused across all shots.
 function buildCircuit(caseId, protocol,customBlueprint=state.custom) {
   const pairQubits = caseId === 'B' ? 3 : 2; // B uses a purification ancilla.
-  const settings = protocol === 'z' ? ['Z'] : ['Z','X'];
+  const settings = protocol === 'z' ? ['Z'] : ['Z',protocol.startsWith('xy')?'XY':'X'];
   const nQubits = pairQubits * settings.length;
   const circuit = QuantumCircuit(nQubits, nQubits);
   const groups = [];
@@ -122,6 +128,7 @@ function buildCircuit(caseId, protocol,customBlueprint=state.custom) {
       else {circuit.h(qA); circuit.cx(qA,qB); if(caseId==='C')circuit.z(qA);}
     }
     if (settings[k] === 'X') { circuit.h(qA); circuit.h(qB); }
+    if (settings[k] === 'XY') { circuit.h(qA); circuit.sdg(qB); circuit.h(qB); }
     groups.push({ setting: settings[k], qA, qB });
   }
   // Measure every qubit for broad backend compatibility, including environment ancillas.
@@ -155,10 +162,12 @@ function evaluateEvidence(entries, bundle, protocol) {
   for (const g of bundle.groups) correlations[g.setting] = parityCorrelation(entries, bundle.nQubits, g.qA, g.qB);
   const zz = correlations.Z.expectation;
   const xx = correlations.X?.expectation ?? null;
+  const xy = correlations.XY?.expectation ?? null;
+  const second = xx ?? xy;
   const n = correlations.Z.samples;
-  if (xx !== null && correlations.X.samples !== n) throw new Error('Unequal sample counts between bases.');
-  const sign = protocol === 'minus' ? -1 : 1;
-  const S = xx === null ? null : zz + sign*xx;
+  if (second !== null && (correlations.X?.samples ?? correlations.XY?.samples) !== n) throw new Error('Unequal sample counts between bases.');
+  const sign = protocol === 'minus' || protocol === 'xyminus' ? -1 : 1;
+  const S = second === null ? null : zz + sign*second;
   // One-sided Hoeffding bound for S from two independent sets of ±1 samples.
   // Predeclare protocol before measurement. No repeated-testing guarantees claimed.
   const margin = S === null ? null : 2*Math.sqrt(Math.log(1/ALPHA)/n);
@@ -167,7 +176,7 @@ function evaluateEvidence(entries, bundle, protocol) {
   // For all two-qubit states: F_(Phi+) <= (2 + <ZZ> + <XX>)/4.
   // This upper bound has coverage >=99% only for a predeclared PLUS protocol.
   const fidelityUpper = protocol === 'plus' ? Math.min(1,(2+S+margin)/4) : null;
-  return { zz, xx, S, margin, lower, fidelityUpper, certified, shotsReturned:n, protocol };
+  return { zz, xx, xy, S, margin, lower, fidelityUpper, certified, shotsReturned:n, protocol };
 }
 // These checks verify internal receipt consistency. They are not physical-device calibration.
 function auditRecord(entries, bundle, selection, evidence) {
@@ -178,7 +187,8 @@ function auditRecord(entries, bundle, selection, evidence) {
   test('Bitstrings have expected width',entries.every(([b])=>b.length===bundle.nQubits));
   test('One circuit requested',bundle.groups.length===(selection.protocol==='z'?1:2));
   test('All measured correlations are within [-1,+1]',
-    Math.abs(evidence.zz)<=1+1e-12 && (evidence.xx===null || Math.abs(evidence.xx)<=1+1e-12));
+    Math.abs(evidence.zz)<=1+1e-12 && (evidence.xx===null || Math.abs(evidence.xx)<=1+1e-12) &&
+    (evidence.xy===null || Math.abs(evidence.xy)<=1+1e-12));
   test('Z-only does not certify',selection.protocol!=='z' ||
     (!evidence.certified && evidence.S===null && evidence.margin===null));
   test('Witness and threshold agree',evidence.lower===null ? !evidence.certified:
@@ -256,7 +266,7 @@ function allowedDecision(verdict) {
 
 /* Visual composer: only edits existing whitelisted source gates. */
 function sourceGateAt(g,q){
-  const m=/^([HZ])([01])$/.exec(g);
+  const m=/^([HZST])([01])$/.exec(g);
   if(m)return Number(m[2])===q?m[1]:'─';
   if(g==='CX01')return q===0?'●':'⊕';
   if(g==='CX10')return q===1?'●':'⊕';
@@ -269,7 +279,7 @@ function sourceWorkbench(text){
     gs.slice(0,12).map((g,i)=>'<span title="Step '+(i+1)+' '+escapeHTML(g)+'" class="cb-cell'+(g.startsWith('CX')?' cb-cnot':'')+
       '">'+escapeHTML(sourceGateAt(g,q))+'</span>').join('')+
     (gs.length?'':'<span class="fine">Start in |00〉 · choose a gate</span>')+'</div>';
-  const shelf=['H0','H1','Z0','Z1','CX01','CX10'].map(g=>
+  const shelf=['H0','H1','Z0','Z1','S0','S1','T0','T1','CX01','CX10'].map(g=>
     '<button type="button" data-action="gate-add" data-gate="'+g+'" '+(gs.length>=12?'disabled':'')+
     ' aria-label="Append '+g+'">'+g+'</button>').join('');
   return '<div class="cb-studio"><div class="eyebrow">Live circuit studio / creator</div>'+
@@ -283,14 +293,16 @@ function sourceWorkbench(text){
 }
 /* Scientific picture, computed only after actual backend counts have arrived. */
 function witnessPlane(e,protocol){
-  if(e.xx===null||protocol==='z')
+  if((e.xx===null&&e.xy===null)||protocol==='z')
     return '<div class="cb-no-plane"><strong>Z-only cannot settle entanglement.</strong> No X sample was collected. More Z shots cannot create this missing information. A new two-basis run is needed.</div>';
-  const minus=protocol==='minus';
+  const minus=protocol==='minus'||protocol==='xyminus';
+  const isXY=protocol==='xyplus'||protocol==='xyminus';
+  const measured=isXY?e.xy:e.xx;
   const zone=minus?'62,40 180,40 62,158':'180,40 298,40 298,158';
   const edge=minus?'62,158 180,40':'180,40 298,158';
   const fx=v=>180+118*Math.max(-1,Math.min(1,v)),fy=v=>158-118*Math.max(-1,Math.min(1,v));
   const certified=e.lower>1;
-  const alt='Measured XX '+fmt(e.xx)+', ZZ '+fmt(e.zz)+', witness '+fmt(e.S)+
+  const alt='Measured '+(isXY?'XY':'XX')+' '+fmt(measured)+', ZZ '+fmt(e.zz)+', witness '+fmt(e.S)+
     ', one-sided lower bound '+fmt(e.lower)+'. '+(certified?'Entanglement certified.':'Entanglement not certified.');
   return '<div class="cb-plane"><div class="eyebrow">Measured evidence / geometric witness</div>'+
     '<h3>The measurement has a location</h3>'+
@@ -299,8 +311,8 @@ function witnessPlane(e,protocol){
     '<polygon points="'+zone+'" fill="#d5e8d9"/>'+
     '<path d="M62 158 H298 M180 40 V276" stroke="#b9c6ba" fill="none"/>'+
     '<polyline points="'+edge+'" fill="none" stroke="#377057" stroke-width="2.5" stroke-dasharray="6 4"/>'+
-    '<circle cx="'+fx(e.xx).toFixed(2)+'" cy="'+fy(e.zz).toFixed(2)+'" r="10" fill="#af4934" stroke="#fff" stroke-width="3"/>'+
-    '<text x="180" y="307" text-anchor="middle">XX measured (−1 … +1)</text>'+
+    '<circle cx="'+fx(measured).toFixed(2)+'" cy="'+fy(e.zz).toFixed(2)+'" r="10" fill="#af4934" stroke="#fff" stroke-width="3"/>'+
+    '<text x="180" y="307" text-anchor="middle">'+(isXY?'XY':'XX')+' measured (−1 … +1)</text>'+
     '<text x="17" y="158" text-anchor="middle" transform="rotate(-90 17 158)">ZZ measured (−1 … +1)</text>'+
     '<text x="53" y="277" text-anchor="end">−1</text>'+
     '<text x="53" y="44" text-anchor="end">+1</text></svg>'+
@@ -374,7 +386,7 @@ function setupView() {
     <label for="cb3-gates">Two-qubit source blueprint · optional text editor</label>
     <input id="cb3-gates" data-field="gates" value="${escapeHTML(state.custom.gates)}" maxlength="110"
       style="width:100%;padding:12px;font:14px ui-monospace,Consolas,monospace;background:#fff;color:#17271d">
-    <p class="fine">Permitted gates: H0 H1 Z0 Z1 CX01 CX10. Sequence max 12 gates; initial state |00⟩.</p>
+    <p class="fine">Permitted gates: H, Z, S (90° phase), T (45° phase), CX; choose qubit 0 or 1. Max 12 gates, initial |00⟩. Phase probes use Y-basis readout on qubit 1.</p>
     <label for="cb3-claim">Supplier claim</label><select id="cb3-claim" data-field="claimType">
       ${[['ENTANGLED','Source is entangled'],['SEPARABLE','Source is separable'],
         ['FIDELITY_MIN','Fidelity to Bell Phi+ is at least the selected percentage']].map(([v,label])=>
@@ -420,7 +432,7 @@ function evidenceView() {
        calibrated:theoreticalFalseCertificationRate(e.shotsReturned,e.margin)} : null;
   const scienceLine = state.selection.protocol==='z'
     ? 'Only ZZ was measured. No entanglement certification, nor a quantitative fidelity refutation, is possible from this evidence alone.'
-    : `Predeclared statistic ${state.selection.protocol==='minus'?'ZZ − XX':'ZZ + XX'}; lower confidence bound ${fmt(e.lower)}. ${e.certified?'This bound exceeds the separable-state limit 1.':'It does not exceed the separable-state limit 1.'}`;
+    : `Predeclared statistic ${state.selection.protocol==='minus'?'ZZ − XX':state.selection.protocol==='xyplus'?'ZZ + XY':state.selection.protocol==='xyminus'?'ZZ − XY':'ZZ + XX'}; lower confidence bound ${fmt(e.lower)}. ${e.certified?'This bound exceeds the separable-state limit 1.':'It does not exceed the separable-state limit 1.'}`;
   const buttons = [
     ['CERTIFIED_ENTANGLEMENT','Certify entanglement'],
     ['REFUTE_SPECIFIC_CLAIM','Refute submitted claim'],
@@ -447,7 +459,7 @@ function evidenceView() {
       ${challenge.caseResolved?'The precise claim can be resolved from this measured evidence.':'The scientifically defensible outcome is abstention.'}
       ${state.decisionHistory.length>1?'Your incorrect decision attempts remain permanently in this session receipt.':''}</p>`:''}
   </div>`;
-  layout(`<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / evidence acquired</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(activeClaim())}</p><p class="fine">Actual measurements from this execution only. No other source has been measured in this Run.</p>${missionBlock}<div class="signal-rail">${parityRail('Z-BASIS / ZZ',e.zz)}${parityRail('X-BASIS / XX',e.xx)}</div>${witnessPlane(e,state.selection.protocol)}<div class="metrics"><div class="metric"><small>ZZ observed</small><strong>${fmt(e.zz)}</strong></div><div class="metric"><small>XX observed</small><strong>${e.xx===null?'NOT MEASURED':fmt(e.xx)}</strong></div><div class="metric"><small>Selected witness S</small><strong>${fmt(e.S)}</strong></div><div class="metric"><small>One-sided margin (α = 0.01)</small><strong>${fmt(e.margin)}</strong></div></div><div class="callout">${scienceLine}</div>
+  layout(`<div class="card"><div class="eyebrow">${escapeHTML(c.docket)} / evidence acquired</div><h2>${escapeHTML(c.label)}</h2><p><strong>Submitted claim:</strong> ${escapeHTML(activeClaim())}</p><p class="fine">Actual measurements from this execution only. No other source has been measured in this Run.</p>${missionBlock}<div class="signal-rail">${parityRail('Z-BASIS / ZZ',e.zz)}${parityRail(state.selection.protocol.startsWith('xy')?'X⊗Y / XY':'X-BASIS / XX',e.xy??e.xx)}</div>${witnessPlane(e,state.selection.protocol)}<div class="metrics"><div class="metric"><small>ZZ observed</small><strong>${fmt(e.zz)}</strong></div><div class="metric"><small>${state.selection.protocol.startsWith('xy')?'XY observed':'XX observed'}</small><strong>${(e.xy??e.xx)===null?'NOT MEASURED':fmt(e.xy??e.xx)}</strong></div><div class="metric"><small>Selected witness S</small><strong>${fmt(e.S)}</strong></div><div class="metric"><small>One-sided margin (α = 0.01)</small><strong>${fmt(e.margin)}</strong></div></div><div class="callout">${scienceLine}</div>
   ${(state.selection.caseId==='B'||(state.selection.caseId==='D'&&state.custom.claimType==='FIDELITY_MIN'))&&e.fidelityUpper!==null?
     `<div class="callout"><strong>Claim-specific test:</strong> one-sided 99% upper bound for Bell Φ+ fidelity:
     <b>${fmt(e.fidelityUpper)}</b>. Declared threshold:
