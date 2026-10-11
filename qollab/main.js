@@ -253,6 +253,62 @@ function allowedDecision(verdict) {
 }
 // END PURE CHALLENGE RULES
 
+
+/* Visual composer: only edits existing whitelisted source gates. */
+function sourceGateAt(g,q){
+  const m=/^([HZ])([01])$/.exec(g);
+  if(m)return Number(m[2])===q?m[1]:'─';
+  if(g==='CX01')return q===0?'●':'⊕';
+  if(g==='CX10')return q===1?'●':'⊕';
+  return '?';
+}
+function sourceWorkbench(text){
+  const gs=String(text||'').trim().toUpperCase().split(/\s+/).filter(Boolean);
+  const valid=gs.length<=12&&gs.every(g=>SOURCE_GATES.has(g));
+  const lane=q=>'<div class="cb-lane"><b class="cb-lane-name">q'+q+'</b>'+
+    gs.slice(0,12).map((g,i)=>'<span title="Step '+(i+1)+' '+escapeHTML(g)+'" class="cb-cell'+(g.startsWith('CX')?' cb-cnot':'')+
+      '">'+escapeHTML(sourceGateAt(g,q))+'</span>').join('')+
+    (gs.length?'':'<span class="fine">Start in |00〉 · choose a gate</span>')+'</div>';
+  const shelf=['H0','H1','Z0','Z1','CX01','CX10'].map(g=>
+    '<button type="button" data-action="gate-add" data-gate="'+g+'" '+(gs.length>=12?'disabled':'')+
+    ' aria-label="Append '+g+'">'+g+'</button>').join('');
+  return '<div class="cb-studio"><div class="eyebrow">Live circuit studio / creator</div>'+
+    '<h3>Build a source without writing code</h3>'+
+    '<p class="fine">Click real quantum instructions to compose the Qiskit source. The blueprint remains editable below. No measurements are simulated here.</p>'+
+    '<div class="cb-shelf">'+shelf+'</div>'+
+    '<div class="cb-lanes">'+lane(0)+lane(1)+'</div>'+
+    '<div class="cb-toolbar"><span class="'+(valid?'good':'bad')+'">'+gs.length+'/12 · '+(valid?'valid':'invalid')+'</span>'+
+    '<button type="button" class="outline" data-action="gate-undo" '+(!gs.length?'disabled':'')+'>Undo</button>'+
+    '<button type="button" class="outline" data-action="gate-clear" '+(!gs.length?'disabled':'')+'>Clear</button></div></div>';
+}
+/* Scientific picture, computed only after actual backend counts have arrived. */
+function witnessPlane(e,protocol){
+  if(e.xx===null||protocol==='z')
+    return '<div class="cb-no-plane"><strong>Z-only cannot settle entanglement.</strong> No X sample was collected. More Z shots cannot create this missing information. A new two-basis run is needed.</div>';
+  const minus=protocol==='minus';
+  const zone=minus?'62,40 180,40 62,158':'180,40 298,40 298,158';
+  const edge=minus?'62,158 180,40':'180,40 298,158';
+  const fx=v=>180+118*Math.max(-1,Math.min(1,v)),fy=v=>158-118*Math.max(-1,Math.min(1,v));
+  const certified=e.lower>1;
+  const alt='Measured XX '+fmt(e.xx)+', ZZ '+fmt(e.zz)+', witness '+fmt(e.S)+
+    ', one-sided lower bound '+fmt(e.lower)+'. '+(certified?'Entanglement certified.':'Entanglement not certified.');
+  return '<div class="cb-plane"><div class="eyebrow">Measured evidence / geometric witness</div>'+
+    '<h3>The measurement has a location</h3>'+
+    '<svg viewBox="0 0 360 314" role="img" aria-label="'+escapeHTML(alt)+'">'+
+    '<rect x="62" y="40" width="236" height="236" fill="#fbfbf8" stroke="#becbbd"/>'+
+    '<polygon points="'+zone+'" fill="#d5e8d9"/>'+
+    '<path d="M62 158 H298 M180 40 V276" stroke="#b9c6ba" fill="none"/>'+
+    '<polyline points="'+edge+'" fill="none" stroke="#377057" stroke-width="2.5" stroke-dasharray="6 4"/>'+
+    '<circle cx="'+fx(e.xx).toFixed(2)+'" cy="'+fy(e.zz).toFixed(2)+'" r="10" fill="#af4934" stroke="#fff" stroke-width="3"/>'+
+    '<text x="180" y="307" text-anchor="middle">XX measured (−1 … +1)</text>'+
+    '<text x="17" y="158" text-anchor="middle" transform="rotate(-90 17 158)">ZZ measured (−1 … +1)</text>'+
+    '<text x="53" y="277" text-anchor="end">−1</text>'+
+    '<text x="53" y="44" text-anchor="end">+1</text></svg>'+
+    '<p class="cb-plot-result"><strong>'+(certified?'WITNESS CERTIFIED':'CERTIFICATION NOT ESTABLISHED')+
+    '</strong> · S = '+fmt(e.S)+' · lower = '+fmt(e.lower)+' · threshold = 1</p>'+
+    '<p class="fine">Green area: points whose selected witness value is above 1. The red point uses real counted correlations. The <strong>lower confidence bound</strong> must also exceed 1 for certification; crossing the line alone is insufficient. Entangled states may lie outside green.</p></div>';
+}
+
 const css = `
 #cb3{--bg:#f2efe8;--panel:#fffdf9;--ink:#212d28;--muted:#5d6c64;--line:#ccd1c7;--accent:#a63f2c;--forest:#22382e;--safe:#255944; color:var(--ink);background:var(--bg);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;min-height:540px}
 #cb3 *{box-sizing:border-box}#cb3 .header{background:var(--forest);color:#f6f2e9;border-bottom:4px solid var(--accent);padding:24px clamp(18px,4vw,36px)}
@@ -281,6 +337,24 @@ const css = `
 #cb3 .scoreline{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 #cb3 .scoreline span{font:600 11px ui-monospace,monospace;letter-spacing:.03em;border:1px solid #aab8aa;padding:6px 8px}
 #cb3 .mission-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+#cb3 .cb-studio{background:#edf1e9;padding:14px;border:1px solid #b8c9b7;margin:16px 0}
+#cb3 .cb-studio h3,#cb3 .cb-plane h3{font:700 22px/1.2 Georgia,serif;margin:5px 0 12px}
+#cb3 .cb-shelf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:13px 0}
+#cb3 .cb-shelf button{font:700 12px ui-monospace,monospace;padding:10px 4px}
+#cb3 .cb-lanes{background:#fff;overflow-x:auto;padding:15px 8px;border:1px solid #becbbc}
+#cb3 .cb-lane{display:flex;align-items:center;gap:6px;min-width:max-content;min-height:45px}
+#cb3 .cb-lane-name{width:30px;flex:none;font:700 13px ui-monospace,monospace}
+#cb3 .cb-cell{width:43px;height:41px;flex:none;display:flex;align-items:center;justify-content:center;background:#e5edde;border:1px solid #7e9986;color:#214a34;font:800 20px ui-monospace,monospace}
+#cb3 .cb-cnot{background:#f1dfd1;border-color:#ac775d;color:#8b402e}
+#cb3 .cb-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;font:600 12px ui-monospace,monospace}
+#cb3 .cb-toolbar span{margin-right:auto}
+#cb3 .cb-toolbar button{padding:7px 10px;font-size:12px}
+#cb3 .cb-plane{background:#f4f7f0;border:1px solid #bacbbb;padding:17px;margin:14px 0}
+#cb3 .cb-plane svg{display:block;width:min(100%,380px);margin:0 auto;font:11px system-ui;fill:#425f4d}
+#cb3 .cb-plot-result{padding:10px 0;border-top:1px solid #c1d3c3;font:13px system-ui}
+#cb3 .cb-no-plane{background:#fff5e9;border:1px dashed #b38d6d;padding:13px;margin:12px 0}
+
 @media(max-width:420px){#cb3 .signal-rail{grid-template-columns:1fr}}
 @media(max-width:760px){#cb3 .grid{grid-template-columns:1fr}#cb3 .page{padding:14px}#cb3 .card{padding:16px}#cb3 .metrics{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){#cb3 *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
